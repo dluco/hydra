@@ -1,11 +1,7 @@
-add cookie support
-switch to multiple source files, one for UI ops, one for tab ops, etc.
-switch function names to follow scheme GROUP_SPECIFIC
-need to force scrollbars to hide, must do research with it D: maybe i will use gtk style
-add an ~/.hydra_rc file
-switch to a multiple file format, one file isn't really cutitng it:
-    hydra.c
-    callbacks.c
-    rc.c
-    tab.c
-
+- add cookie support
+- switch function names to follow scheme GROUP_SPECIFIC
+- need to force scrollbars to hide, must do research with it D: maybe i will use gtk style
+- add a ~/.hydra_rc file
+- switch to a multiple file format, one file isn't really cutting it:
+	- hydra.c
+	- tab.c

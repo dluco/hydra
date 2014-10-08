@@ -9,7 +9,7 @@
 #include "callbacks.h"
 #include "hydra.h"
 
-gchar* tab_get_tab_postition()
+gchar *tab_get_tab_postition()
 {
 	gchar *page_info = NULL;
 
@@ -163,7 +163,7 @@ void tab_switch(gboolean b)
 }
 
 /* when a new tab is requested, return the t->view */
-WebKitWebView * tab_new_requested(WebKitWebView *v, WebKitWebFrame *f)
+WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f)
 {
 	tab_new(FALSE); 
 	struct tab *t = get_tab(NULL, gtk_notebook_get_current_page(w.notebook));
@@ -349,7 +349,7 @@ void window_setup()
 
 
 /* main entry-point */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	gtk_init(&argc, &argv);
 

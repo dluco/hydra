@@ -1,5 +1,21 @@
-#ifndef SB_H
-#define SB_H
+#ifndef HYDRA_H
+#define HYDRA_H
+
+typedef struct _browser {	
+	WebKitWebSettings *webkitsettings;
+	WebKitWebWindowFeatures *webkitwindowfeatures;
+	SoupSession *session;
+	SoupCookieJar *jar;
+	gboolean hide;
+	GtkWidget *win;
+	GtkWidget *bar;	
+	GtkWidget *searchbar; 
+	GtkWidget *vbox;
+	GtkWidget *hbox;
+	GtkNotebook *notebook; 
+	GtkWidget *status;
+	GtkWidget *status_info;
+} Browser;
 
 void history_command();
 void grab_bar();
@@ -16,7 +32,7 @@ void search(GtkEntry *entry, gboolean b);
 void toggle();
 void show_search(gboolean b);
 void focus_view();
-WebKitWebView * tab_new_requested(WebKitWebView *v, WebKitWebFrame *f);
+WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f);
 void tab_switch(gboolean b);
 
-#endif /* SB_H */
+#endif /* HYDRA_H */

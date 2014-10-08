@@ -8,8 +8,6 @@ OBJ = ${SRC:.c=.o}
 
 all: hydra
 
-${OBJ}: config.mk
-
 .c.o:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<

@@ -117,7 +117,7 @@ void cb_download(WebKitWebView *web_view, GObject *d, gpointer user_data)
 }
 
 /* entry callback */
-void cb_entry(GtkWidget* entry, gpointer data)
+void cb_entry(GtkWidget *entry, gpointer data)
 {
 	struct tab *t = get_tab(NULL, gtk_notebook_get_current_page(w.notebook));
 
@@ -132,7 +132,7 @@ void cb_entry(GtkWidget* entry, gpointer data)
 }
 
 /* link hovering callback */
-void cb_link_hover(WebKitWebView* page, const gchar* title, const gchar* link, gpointer data)
+void cb_link_hover(WebKitWebView *page, const gchar *title, const gchar *link, gpointer data)
 {
 	if (link != NULL) { 
 		gtk_statusbar_push(GTK_STATUSBAR(w.status), 0, link);	
@@ -155,9 +155,9 @@ void cb_go(gboolean b)
 
 
 /* when the page load is commited, call this function */
-void cb_load_status(GObject* object, GParamSpec* pspec, tab *t)
+void cb_load_status(GObject *object, GParamSpec *pspec, tab *t)
 {
-	const gchar* uri = webkit_web_view_get_uri(t->view);
+	const gchar *uri = webkit_web_view_get_uri(t->view);
 	WebKitLoadStatus status = webkit_web_view_get_load_status(t->view);
 	
 	switch(status) {

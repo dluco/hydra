@@ -340,13 +340,12 @@ void window_setup()
 	g_signal_connect(G_OBJECT(w.bar), "activate", G_CALLBACK(cb_entry), NULL);
 	g_signal_connect(G_OBJECT(w.notebook), "switch-page", G_CALLBACK(tab_focus), NULL);
 	g_signal_connect(G_OBJECT(w.win), "destroy", G_CALLBACK(gtk_main_quit), NULL);
-	g_signal_connect(w.win, "key-press-event", G_CALLBACK(cb_keypress), NULL);
+	g_signal_connect(G_OBJECT(w.win), "key-press-event", G_CALLBACK(cb_keypress), NULL);
 
 	gtk_container_add(GTK_CONTAINER(w.win), w.vbox);
 	gtk_widget_show_all(w.win);
 	gtk_widget_hide(w.searchbar);
 	gtk_widget_grab_focus(w.bar);
-
 }
 
 
@@ -360,6 +359,7 @@ int main(int argc, char *argv[])
 	args = args_parse(argc, argv);
 
 	window_setup();
+
 	if (argc == 2) {
 		load_uri(argv[1]);
 	}

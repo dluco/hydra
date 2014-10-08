@@ -1,12 +1,12 @@
-# sb - simple browser
+# hydra - simple browser
 # See LICENSE file for copyright and license details.
 
 include config.mk
 
-SRC = sb.c callbacks.c
+SRC = hydra.c callbacks.c
 OBJ = ${SRC:.c=.o}
 
-all: sb
+all: hydra
 
 .c.o:
 	@echo CC $<
@@ -14,36 +14,36 @@ all: sb
 
 ${OBJ}: config.mk
 
-sb: ${OBJ}
+hydra: ${OBJ}
 	@echo CC -o $@
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
 	@echo cleaning
-	@${RM} sb ${OBJ} sb-${VERSION}.tar.gz
+	@${RM} hydra ${OBJ} hydra-${VERSION}.tar.gz
 
 dist: clean
 	@echo creating dist tarball
-	@mkdir -p sb-${VERSION}
-	@cp -R Makefile config.mk sb sb-binary ${SRC} sb-${VERSION}
-	@tar -cf sb-${VERSION}.tar sb-${VERSION}
-	@gzip sb-${VERSION}.tar
-	@rm -rf sb-${VERSION}
+	@mkdir -p hydra-${VERSION}
+	@cp -R Makefile config.mk hydra hydra-binary ${SRC} hydra-${VERSION}
+	@tar -cf hydra-${VERSION}.tar hydra-${VERSION}
+	@gzip hydra-${VERSION}.tar
+	@rm -rf hydra-${VERSION}
 
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@cp -f sb ${DESTDIR}${PREFIX}/bin/sb-binary
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/sb-binary
-	@cp -f sb-script ${DESTDIR}${PREFIX}/bin/sb
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/sb
+	@cp -f hydra ${DESTDIR}${PREFIX}/bin/hydra-binary
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/hydra-binary
+	@cp -f hydra-script ${DESTDIR}${PREFIX}/bin/hydra
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/hydra
 
 
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
-	@rm -f ${DESTDIR}${PREFIX}/bin/sb
-	@rm -f ${DESTDIR}${PREFIX}/bin/sb-binary
+	@rm -f ${DESTDIR}${PREFIX}/bin/hydra
+	@rm -f ${DESTDIR}${PREFIX}/bin/hydra-binary
 
 
 .PHONY: all clean dist install uninstall

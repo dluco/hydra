@@ -2,9 +2,9 @@ add cookie support
 switch to multiple source files, one for UI ops, one for tab ops, etc.
 switch function names to follow scheme GROUP_SPECIFIC
 need to force scrollbars to hide, must do research with it D: maybe i will use gtk style
-add an ~/.sb_rc file
+add an ~/.hydra_rc file
 switch to a multiple file format, one file isn't really cutitng it:
-    sb.c
+    hydra.c
     callbacks.c
     rc.c
     tab.c

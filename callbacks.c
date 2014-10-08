@@ -8,7 +8,7 @@
 #include "defaults.h"
 #include "callbacks.h"
 
-#include "sb.h"
+#include "hydra.h"
 
 /* key press callback function. NEEDED: a config.h where keys are defined */
 gboolean cb_keypress(GtkWidget *widget, GdkEventKey *event)

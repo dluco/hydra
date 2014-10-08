@@ -3,9 +3,9 @@
 #define DEFAULT_SEARCH "http://www.google.com/search?q="
 #define DEFAULT_FONT "san-serif"
 #define DEFAULT_TAB_LENGTH 25
-#define DEFAULT_HISTORY_FILE ".sb_history"
-#define DEFAULT_COOKIE_FILE ".sb_cookies"
-#define DEFAULT_STYLE_SHEET ".sb_stylesheet"
+#define DEFAULT_HISTORY_FILE ".hydra_history"
+#define DEFAULT_COOKIE_FILE ".hydra_cookies"
+#define DEFAULT_STYLE_SHEET ".hydra_stylesheet"
 #define DEFAULT_ZOOM_INCREMENT .05
 #define DEFAULT_ZOOM_LEVEL 1.0
 #define DEFAULT_HEIGHT 900

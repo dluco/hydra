@@ -1,12 +1,8 @@
-# mocicon version
-VERSION = 0.1.4
-
-# Customize below to fit your system
+VERSION = 0.0.0
 
 # paths
 PREFIX = /usr
 MANPREFIX = ${PREFIX}/share/man
-
 
 # includes and libs
 

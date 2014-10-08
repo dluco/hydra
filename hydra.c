@@ -7,7 +7,7 @@
 #include <glib/gstdio.h>
 #include "defaults.h"
 #include "callbacks.h"
-#include "sb.h"
+#include "hydra.h"
 
 gchar* tab_get_tab_postition()
 {
@@ -281,7 +281,7 @@ void tab_focus(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer 
 	gtk_statusbar_push(GTK_STATUSBAR(w.status), 0, "");
 
 	if (title == NULL && url == NULL) {
-		title = "sb";
+		title = "hydra";
 		url = "";
 	}
 

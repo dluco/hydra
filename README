@@ -1,4 +1,4 @@
-sb
+hydra
 
 Simple Browser based on webkit.
 
@@ -14,7 +14,7 @@ CTRL + h = hide auxillary widgets
 CTRL + PageUp = previous tab
 CTRL + PageDown = next tab
 CTRL + t = new tab
-CTRL + w = close tab ( zero tabs closes sb entirely)
+CTRL + w = close tab ( zero tabs closes hydra entirely)
 CTRL + { = zoom out
 CTRL + } = zoom in
 CTRL + r = reload
@@ -34,7 +34,7 @@ License : GPLv3 except stuff under MIT/X from surf
 
 Please Note:
 
-You will need dmenu with the vertical tiling patch, wget, xterm and sponge to use sb with its default configuration, you of course can use different programs if you want to. 
+You will need dmenu with the vertical tiling patch, wget, xterm and sponge to use hydra with its default configuration, you of course can use different programs if you want to. 
 
 Swing me some electronic mail MutantTurkey@gmail.com
 

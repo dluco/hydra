@@ -1,20 +1,17 @@
-# Maintainer: Calvin Morrison <mutantturkey@gmail.com>
-# Contributor:  Dannny <danny.a95@gmail.com>
-
-pkgname=sb-git
-pkgver=20100506
+pkgname=hydra-git
+pkgver=0.0.0
 pkgrel=1
-pkgdesc="sb - a simple tabbed webkit browser, aims to suckless, while still being a full featured browser for the modern desktop."
+pkgdesc="hydra - a simple tabbed webkit browser, aims to suckless, while still being a full featured browser for the modern desktop."
 arch=('i686' 'x86_64')
-url="http://github.com/mutantturkey/sb/"
+url="http://github.com/dluco/hydra/"
 license=('GPL' 'MIT/X')
 depends=('gtk2' 'libwebkit' 'dmenu-vertical' 'moreutils')
 makedepends=('git')
-provides=('sb')
-conflicts=('sb')
+provides=('hydra')
+conflicts=('hydra')
 
-_gitroot=git://github.com/mutantturkey/sb.git
-_gitname=sb
+_gitroot=git://github.com/dluco/hydra.git
+_gitname=hydra
 
 build() {
   cd $srcdir

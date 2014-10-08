@@ -1,10 +1,12 @@
-#include <gdk/gdkkeysyms.h>
-#include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <gdk/gdkkeysyms.h>
 #include <webkit/webkit.h>
 #include <glib/gstdio.h>
+#include "args.h"
 #include "defaults.h"
 #include "callbacks.h"
 #include "hydra.h"
@@ -281,7 +283,7 @@ void tab_focus(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer 
 	gtk_statusbar_push(GTK_STATUSBAR(w.status), 0, "");
 
 	if (title == NULL && url == NULL) {
-		title = "hydra";
+		title = "Hydra";
 		url = "";
 	}
 
@@ -351,7 +353,11 @@ void window_setup()
 /* main entry-point */
 int main(int argc, char *argv[])
 {
+	Args *args;
+
 	gtk_init(&argc, &argv);
+
+	args = args_parse(argc, argv);
 
 	window_setup();
 	if (argc == 2) {

@@ -7,4 +7,6 @@ typedef struct _args {
 	char *geometry;
 } Args;
 
+Args *args_parse(int argc, char *argv[]);
+
 #endif /* ARGS_H */

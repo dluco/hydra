@@ -3,7 +3,7 @@
 
 include ../config.mk
 
-SRC = hydra.c callbacks.c
+SRC = args.c hydra.c callbacks.c utils.c
 OBJ = ${SRC:.c=.o}
 
 all: hydra

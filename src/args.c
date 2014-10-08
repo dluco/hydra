@@ -1,7 +1,9 @@
-#include <glib.h>
+#include <stdlib.h>
+#include <gtk/gtk.h>
 #include "args.h"
+#include "utils.h"
 
-Args *options_parse(int argc, char *argv[])
+Args *args_parse(int argc, char *argv[])
 {
 	Args *args;
 	GOptionContext *context;

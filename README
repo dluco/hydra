@@ -1,11 +1,10 @@
-hydra
+Hydra
+=====
 
-Simple Browser based on webkit.
+Lightweight webkit browser.
 
-this is pretty much my favorite web browser on the planet. why? because I am writing it to fit my needs exactly, no more no less. That way it is bloat-free, fast and suited towards my needs.
-
-
-Keyboard Shortcuts (simple to change in source if you desire)
+Keyboard Shortcuts
+------------------
 
 CTRL + l = grab URL bar
 CTRL + j = foreward
@@ -23,38 +22,4 @@ CTRL + find = open search bar
 CTRL + o = open history with dmenu
 CTRL + g = opens history and launches url in new tab 'tab and go'
 ALT + enter + find bar = reverse searchs
-
-Escape, will return focus to the page, instead of the entry bars
-
-
-Code: Written Poorly
-
-License : GPLv3 except stuff under MIT/X from surf
-
-
-Please Note:
-
-You will need dmenu with the vertical tiling patch, wget, xterm and sponge to use hydra with its default configuration, you of course can use different programs if you want to. 
-
-Swing me some electronic mail MutantTurkey@gmail.com
-
-Coding Guidelines:
-
-Use 2 spaces for each level
-statements open bracket should be on the same line as the statement
-the close bracket should be on the same level of the statement
-all declared variabls shall have 1 line of whitespace after the function head, and then after another line
-
-Example
-
-function (char *foo, int bar) {
-
-  int cake = 1;
-
-  if( int == cake ) {
-    puts(foo);
-  }
-
-return TRUE;
-}
-
+Escape = return focus to the page, instead of the entry bars

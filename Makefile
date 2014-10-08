@@ -3,8 +3,6 @@
 
 include config.mk
 
-DISTFILES = LICENSE makefile README TODO data/ src/
-
 all: hydra
 
 hydra:

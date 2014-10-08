@@ -1,7 +1,7 @@
 # hydra - lightweight browser
 # See LICENSE file for copyright and license details.
 
-include config.mk
+include ../config.mk
 
 SRC = hydra.c callbacks.c
 OBJ = ${SRC:.c=.o}

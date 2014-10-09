@@ -1,3 +1,10 @@
 - add cookie support
 - add config file support
 - close button on tabs
+
+
+BUGS
+----
+
+- crashes on google sites (sometimes)
+- crashes when closing from youtube

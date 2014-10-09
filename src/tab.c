@@ -44,6 +44,7 @@ Tab *tab_new(Browser *b, gboolean background)
 	stylesheet = g_strconcat("file://", g_get_home_dir(), "/", DEFAULT_STYLE_SHEET, NULL);
 
 	g_object_set(G_OBJECT(b->webkitsettings),
+		"user_agent", DEFAULT_USER_AGENT,
 		"enable-page-cache", TRUE,
 		"enable-java-applet", FALSE,
 		"user-stylesheet-uri", stylesheet, NULL);					 

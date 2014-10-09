@@ -1,7 +1,10 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define DOWNLOAD_LOCATION g_get_home_dir()
+#define DEFAULT_USER_AGENT "Mozilla/5.0 (X11; U; Unix; en-US) " \
+	"AppleWebKit/537.15 (KHTML, like Gecko) Chrome/24.0.1295.0 " \
+	"Safari/537.15"
+
 #define DOWNLOAD_COMMAND "xterm -bg black -fg white -e wget -P %s -o %s %s"
 #define DEFAULT_SEARCH "https://www.google.com/search?q="
 #define DEFAULT_HOME "https://www.google.ca/"

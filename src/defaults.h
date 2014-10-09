@@ -11,19 +11,6 @@
 #define DEFAULT_HEIGHT 900
 #define DEFAULT_WIDTH 800
 
-GQuark term_data_id;
-#define get_tab(x, page_idx ) (struct tab*)g_object_get_qdata(G_OBJECT(gtk_notebook_get_nth_page(w.notebook, page_idx ) ), term_data_id);
-
-typedef struct tab { 
-	GtkWidget *scroll; 
-	GtkWidget *label; 
-	gchar *main_title; 
-	gchar *url_entry;
-	gint load_progress; 
-	guint status_context_id;
-	WebKitWebView *view; 
-} tab;
-
 struct {	
 	WebKitWebSettings *webkitsettings;
 	WebKitWebWindowFeatures *webkitwindowfeatures;

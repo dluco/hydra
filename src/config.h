@@ -3,7 +3,8 @@
 
 #define DOWNLOAD_LOCATION g_get_home_dir()
 #define DOWNLOAD_COMMAND "xterm -bg black -fg white -e wget -P %s -o %s %s"
-#define DEFAULT_SEARCH "http://www.google.com/search?q="
+#define DEFAULT_SEARCH "https://www.google.com/search?q="
+#define DEFAULT_HOME "https://www.google.ca/"
 #define DEFAULT_FONT "san-serif"
 #define DEFAULT_TAB_LENGTH 25
 #define DEFAULT_HISTORY_FILE ".hydra_history"

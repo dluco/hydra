@@ -1,7 +1,6 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
-#include "defaults.h"
 #include "config.h"
 #include "browser.h"
 #include "tab.h"
@@ -29,7 +28,7 @@ Tab *tab_new(Browser *b, gboolean background)
 
 	/*callbacks*/
 	g_object_connect(G_OBJECT(t->view), "signal::title-changed", G_CALLBACK(tab_title_changed), b,
-										"signal::notify::load-status", G_CALLBACK(cb_load_status), b,
+										"signal::notify::load-status", G_CALLBACK(tab_load_status_changed), b,
 										"signal::hovering-over-link", G_CALLBACK(browser_link_hover), b,
 										"signal::download-requested", G_CALLBACK(cb_download), t->view,
 										"signal::create-web-view", G_CALLBACK(tab_new_requested), NULL, NULL);
@@ -99,6 +98,11 @@ void tab_reload(Tab *t, gboolean bypass)
 	}
 }
 
+void tab_home(Tab *t)
+{
+	tab_load_uri(t, DEFAULT_HOME);
+}
+
 /* increase or decrease the zoom of the page */
 void tab_zoom(Tab *t, gboolean zoom_in)
 {
@@ -142,6 +146,43 @@ void tab_title_changed(WebKitWebView *v, WebKitWebFrame *f, const char *title, B
 	}
 
 	gtk_label_set_label(GTK_LABEL(t->label), tabtitle);
+}
+
+void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Browser *b)
+{
+	const gchar *uri = webkit_web_view_get_uri(view);
+	WebKitLoadStatus status = webkit_web_view_get_load_status(view);
+	Tab *t = browser_get_current_tab(b);
+	
+	switch(status) {
+	case WEBKIT_LOAD_PROVISIONAL:
+		break;
+	case WEBKIT_LOAD_COMMITTED:
+		if (t->view == view) {
+			gtk_entry_set_text(GTK_ENTRY(b->bar), uri); 
+		}
+		
+		FILE *history = fopen(g_build_filename(g_get_home_dir(), DEFAULT_HISTORY_FILE, NULL), "a+");
+		
+		if (history) {
+			fprintf(history, "%s \n", uri);
+			fclose(history);
+		}
+
+		break;
+	case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
+		break;
+	case WEBKIT_LOAD_FINISHED:
+		break;
+	case WEBKIT_LOAD_FAILED:
+		break;
+	default:
+		break;
+	}
+
+	/* update toolbar buttons */
+	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
+	gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), webkit_web_view_can_go_forward(t->view));
 }
 
 /* toggle view source mode */

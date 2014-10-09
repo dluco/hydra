@@ -1,9 +1,3 @@
 - add cookie support
 - add config file support
-
-- add toolbar:
-	- back button
-	- forward button
-	- refresh button / stop button
-	- uri-bar
-	- home button
+- close button on tabs

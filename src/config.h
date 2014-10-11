@@ -3,13 +3,12 @@
 
 #define DEFAULT_USER_AGENT "Mozilla/5.0 (X11; U; Unix; en-US) " \
 	"AppleWebKit/537.15 (KHTML, like Gecko) Chrome/24.0.1295.0 " \
-	"Safari/537.15"
+	"Safari/537.15 Hydra/"VERSION
 
 #define DOWNLOAD_COMMAND "xterm -bg black -fg white -e wget -P %s -o %s %s"
 #define DEFAULT_SEARCH "https://www.google.com/search?q="
 #define DEFAULT_HOME "https://www.google.ca/"
 #define DEFAULT_FONT "san-serif"
-#define DEFAULT_TAB_LENGTH 25
 #define DEFAULT_HISTORY_FILE ".hydra_history"
 #define DEFAULT_COOKIE_FILE ".hydra_cookies"
 #define DEFAULT_STYLE_SHEET ".hydra_stylesheet"

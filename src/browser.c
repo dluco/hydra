@@ -7,7 +7,7 @@
 #include <webkit/webkit.h>
 #include <glib/gstdio.h>
 #include "args.h"
-#include "defaults.h"
+#include "config.h"
 #include "browser.h"
 #include "tab.h"
 #include "callbacks.h"
@@ -144,6 +144,17 @@ Tab *browser_get_current_tab(Browser *b)
 	return browser_get_tab(b, gtk_notebook_get_current_page(b->notebook));
 }
 
+/* get the tab number containing the tab specified */
+int browser_get_tab_num(Browser *b, Tab *t)
+{
+	return gtk_notebook_page_num(b->notebook, t->scroll);
+}
+
+int browser_get_current_tab_num(Browser *b)
+{
+	return browser_get_tab_num(b, browser_get_current_tab(b));
+}
+
 /* close tab, and quit if there are no tabs */
 void browser_close_tab(Browser *b, Tab *t)
 {
@@ -260,18 +271,13 @@ void browser_history(Browser *b)
 void browser_tab_switched(GtkNotebook *notebook, GtkWidget *page, guint page_num, Browser *b)
 {
 	Tab *t = browser_get_tab(b, page_num);
-	const char *url = webkit_web_view_get_uri(t->view);
+	const char *uri = webkit_web_view_get_uri(t->view);
 	const char *title = webkit_web_view_get_title(t->view);
 
+	/* reset browser state for new tab */
+	gtk_window_set_title(GTK_WINDOW(b->window), (title) ? title : DEFAULT_BROWSER_TITLE);
+	gtk_entry_set_text(GTK_ENTRY(b->bar), (uri) ? uri : "");
 	gtk_statusbar_push(GTK_STATUSBAR(b->status), 0, "");
-
-	if (title == NULL && url == NULL) {
-		title = "Hydra";
-		url = "";
-	}
-
-	gtk_window_set_title(GTK_WINDOW(b->window), title);
-	gtk_entry_set_text(GTK_ENTRY(b->bar), url);
 
 	/* update toolbar buttons */
 	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
@@ -325,6 +331,8 @@ Browser *browser_new(void)
 	gtk_container_add(GTK_CONTAINER(b->window), b->vbox);
 
 	/* basic settings */
+	gtk_window_set_wmclass(GTK_WINDOW(b->window), "hydra", "Hydra");
+	gtk_window_set_role(GTK_WINDOW(b->window), "Hydra");
 	gtk_window_set_default_size(GTK_WINDOW(b->window), DEFAULT_HEIGHT, DEFAULT_WIDTH);
 	gtk_entry_set_has_frame(GTK_ENTRY(b->bar), FALSE);
 	gtk_orientable_set_orientation(GTK_ORIENTABLE(b->toolbar), GTK_ORIENTATION_HORIZONTAL);
@@ -334,10 +342,13 @@ Browser *browser_new(void)
 	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), FALSE);
 	gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), FALSE);
 
-	b->webkitsettings = webkit_web_settings_new();
-	b->webkitwindowfeatures = webkit_web_window_features_new();
+	b->webkit_settings = webkit_web_settings_new();
 
-	b->session =	webkit_get_default_session();
+	/* basic webkit settings */
+	g_object_set(G_OBJECT(b->webkit_settings),
+		"user_agent", DEFAULT_USER_AGENT, NULL);
+
+	b->session = webkit_get_default_session();
 	b->jar = soup_cookie_jar_text_new(g_build_filename(g_get_home_dir(),	DEFAULT_COOKIE_FILE, NULL), FALSE);
 	soup_session_add_feature(b->session, SOUP_SESSION_FEATURE(b->jar));
 

@@ -1,10 +1,11 @@
-- add cookie support
+- add advanced cookie support
 - add config file support
 - close button on tabs
+- progress indication:
+	- use GtkSpinner on tab labels?
+	- display percent in window title?
+	- progress bar?
 
 
 BUGS
 ----
-
-- crashes on google sites (sometimes)
-- crashes when closing from youtube

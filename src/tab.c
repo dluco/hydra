@@ -5,18 +5,20 @@
 #include "browser.h"
 #include "tab.h"
 #include "callbacks.h"
+#include "utils.h"
 
 /* create new Tab with parent Browser */
 Tab *tab_new(Browser *b, gboolean background)
 {
 	Tab *t;
-	gchar *stylesheet;
+//	gchar *stylesheet;
 
 	t = g_new0(Tab, 1);
 
 	t->scroll = gtk_scrolled_window_new(NULL, NULL);
 	t->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
-	t->label = gtk_label_new("New Tab");
+	t->label = gtk_label_new(NEW_TAB_TITLE);
+	t->parent = b;
 
 	gtk_container_add(GTK_CONTAINER(t->scroll), GTK_WIDGET(t->view));
 
@@ -27,29 +29,38 @@ Tab *tab_new(Browser *b, gboolean background)
 	gtk_notebook_set_show_tabs(b->notebook, (index > 0));
 
 	/*callbacks*/
-	g_object_connect(G_OBJECT(t->view), "signal::title-changed", G_CALLBACK(tab_title_changed), b,
-										"signal::notify::load-status", G_CALLBACK(tab_load_status_changed), b,
-										"signal::hovering-over-link", G_CALLBACK(browser_link_hover), b,
-										"signal::download-requested", G_CALLBACK(cb_download), t->view,
-										"signal::create-web-view", G_CALLBACK(tab_new_requested), NULL, NULL);
+//	g_object_connect(G_OBJECT(t->view), "signal::title-changed", G_CALLBACK(tab_title_changed), b,
+//										"signal::notify::load-status", G_CALLBACK(tab_load_status_changed), b,
+//										"signal::hovering-over-link", G_CALLBACK(browser_link_hover), b,
+//										"signal::download-requested", G_CALLBACK(cb_download), t->view,
+//										"signal::create-web-view", G_CALLBACK(tab_new_requested), b, NULL);
+
+	g_signal_connect(G_OBJECT(t->view), "notify::title", G_CALLBACK(tab_title_changed), t);
+	g_signal_connect(G_OBJECT(t->view), "notify::load-status", G_CALLBACK(tab_load_status_changed), t);
+	g_signal_connect(G_OBJECT(t->view), "notify::progress", G_CALLBACK(tab_progress_changed), t);
+	g_signal_connect(G_OBJECT(t->view), "hovering-over-link", G_CALLBACK(browser_link_hover), b);
+	g_signal_connect(G_OBJECT(t->view), "create-web-view", G_CALLBACK(tab_new_requested), t);
 	
 	/*settings*/
+	webkit_web_view_set_settings(t->view, b->webkit_settings);
 	webkit_web_view_set_highlight_text_matches(t->view, TRUE);
 	webkit_web_view_set_zoom_level(t->view, DEFAULT_ZOOM_LEVEL);
 	
-	/* this doesn't actually work - because webkit draws them not GTK or something.. */
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(t->scroll), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+//	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(t->scroll), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(t->scroll),
+		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
 	/* load user stylesheet */
-	stylesheet = g_strconcat("file://", g_get_home_dir(), "/", DEFAULT_STYLE_SHEET, NULL);
+//	stylesheet = g_strconcat("file://", g_get_home_dir(), "/", DEFAULT_STYLE_SHEET, NULL);
 
-	g_object_set(G_OBJECT(b->webkitsettings),
-		"user_agent", DEFAULT_USER_AGENT,
-		"enable-page-cache", TRUE,
-		"enable-java-applet", FALSE,
-		"user-stylesheet-uri", stylesheet, NULL);					 
+	/* FIXME: this should be set by config, not here */
+//	g_object_set(G_OBJECT(b->webkitsettings),
+//		"user_agent", DEFAULT_USER_AGENT, NULL);
+//		"enable-page-cache", TRUE,
+//		"enable-java-applet", FALSE,
+//		"user-stylesheet-uri", stylesheet, NULL);					 
 
-	g_free(stylesheet);
+//	g_free(stylesheet);
 
 	/* setup widgets, automatically focus the addressbar */
 	gtk_statusbar_push(GTK_STATUSBAR(b->status), 0, "");
@@ -121,45 +132,60 @@ void tab_zoom_reset(Tab *t)
 }
 
 /* when a new tab is requested, return the t->view */
-WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Browser *b)
+WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab *t)
 {
-	Tab *t = tab_new(b, FALSE); 
-	return t->view;
+	Browser *b = BROWSER(t->parent);
+	Tab *t_new = tab_new(b, FALSE); 
+	return t_new->view;
 }
 
 /* title change callback */
-void tab_title_changed(WebKitWebView *v, WebKitWebFrame *f, const char *title, Browser *b)
+void tab_title_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t)
 {
-	gchar *tabtitle;
+	const gchar *title = webkit_web_view_get_title(view);;
 
-	Tab *t = browser_get_current_tab(b);
-
-	/* update window title if this is the current tab */
-	if (gtk_notebook_get_current_page(b->notebook) == gtk_notebook_page_num(b->notebook, t->scroll)) {
-		gtk_window_set_title(GTK_WINDOW(b->window), g_strconcat(title, NULL));
+	if (title) {
+		t->title = str_copy(&t->title, title);
+		tab_update_title(t);
 	}
-
-	if (strlen(title) <	DEFAULT_TAB_LENGTH) {
-		tabtitle = g_strdup(title);
-	} else {
-		tabtitle = g_strndup(title, DEFAULT_TAB_LENGTH);
-		strcat(tabtitle, "...");
-	}
-
-	gtk_label_set_label(GTK_LABEL(t->label), tabtitle);
 }
 
-void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Browser *b)
+void tab_update_title(Tab *t)
+{
+	gchar *tab_title;
+	Browser *b = BROWSER(t->parent);
+
+	/* update window title if this is the current tab */
+	if (browser_get_current_tab_num(b) == browser_get_tab_num(b, t)) {
+		b->title = g_strdup(t->title);
+		gtk_window_set_title(GTK_WINDOW(b->window), (t->title) ? t->title : DEFAULT_BROWSER_TITLE);
+	}
+
+	/* truncate title if over max and append ellipsis */
+	if (strlen(t->title) < TAB_TITLE_MAX) {
+		tab_title = g_strdup((t->title) ? t->title : "");
+	} else {
+		tab_title = g_strndup(t->title, TAB_TITLE_MAX - 3);
+		strcat(tab_title, "...");
+	}
+
+	/* set tab label */
+	gtk_label_set_label(GTK_LABEL(t->label), tab_title);
+	g_free(tab_title);
+}
+
+void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t)
 {
 	const gchar *uri = webkit_web_view_get_uri(view);
 	WebKitLoadStatus status = webkit_web_view_get_load_status(view);
-	Tab *t = browser_get_current_tab(b);
+	Browser *b = BROWSER(t->parent);
 	
 	switch(status) {
 	case WEBKIT_LOAD_PROVISIONAL:
 		break;
 	case WEBKIT_LOAD_COMMITTED:
-		if (t->view == view) {
+		/* update uri-bar if this is the current tab */
+		if (browser_get_current_tab_num(b) == browser_get_tab_num(b, t)) {
 			gtk_entry_set_text(GTK_ENTRY(b->bar), uri); 
 		}
 		
@@ -174,6 +200,7 @@ void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Browser *b)
 	case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
 		break;
 	case WEBKIT_LOAD_FINISHED:
+		t->progress = 100;
 		break;
 	case WEBKIT_LOAD_FAILED:
 		break;
@@ -184,6 +211,11 @@ void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Browser *b)
 	/* update toolbar buttons */
 	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
 	gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), webkit_web_view_can_go_forward(t->view));
+}
+
+void tab_progress_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t)
+{
+	t->progress = webkit_web_view_get_progress(t->view) * 100;
 }
 
 /* toggle view source mode */

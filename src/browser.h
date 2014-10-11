@@ -2,8 +2,7 @@
 #define BROWSER_H
 
 typedef struct _browser {	
-	WebKitWebSettings *webkitsettings;
-	WebKitWebWindowFeatures *webkitwindowfeatures;
+	WebKitWebSettings *webkit_settings;
 	SoupSession *session;
 	SoupCookieJar *jar;
 	GtkWidget *window;
@@ -16,13 +15,20 @@ typedef struct _browser {
 	GtkWidget *status;
 	GtkWidget *status_info;
 	GQuark term_data_id;
+	gchar *title;
 	gboolean hide;
 } Browser;
+
+#define BROWSER(obj) (Browser *)(obj)
+
+#define DEFAULT_BROWSER_TITLE "Hydra"
 
 #include "tab.h"
 
 Tab *browser_get_tab(Browser *b, int tab_num);
 Tab *browser_get_current_tab(Browser *b);
+int browser_get_tab_num(Browser *b, Tab *t);
+int browser_get_current_tab_num(Browser *b);
 void browser_close_tab(Browser *b, Tab *t);
 void browser_switch_tab(Browser *b, gboolean forward);
 void browser_history(Browser *b);

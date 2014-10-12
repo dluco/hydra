@@ -1,9 +1,13 @@
 - add advanced cookie support
 - add config file support
 - close button on tabs
+- close browser keybinding : Ctrl+q
+- fix progress handling
 
 - favicon support
 	- use webkit favicon database?
+
+- use webkit_settings_set_user_agent_with_application_details
 
 
 BUGS

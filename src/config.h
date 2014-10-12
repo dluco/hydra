@@ -1,5 +1,5 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
 
 #define DEFAULT_USER_AGENT "Mozilla/5.0 (X11; U; Unix; en-US) " \
 	"AppleWebKit/537.15 (KHTML, like Gecko) Chrome/24.0.1295.0 " \
@@ -17,4 +17,4 @@
 #define DEFAULT_HEIGHT 900
 #define DEFAULT_WIDTH 800
 
-#endif /* CONFIG_H */
+#endif /* _CONFIG_H_ */

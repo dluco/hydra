@@ -1,10 +1,9 @@
 - add advanced cookie support
 - add config file support
 - close button on tabs
-- progress indication:
-	- use GtkSpinner on tab labels?
-	- display percent in window title?
-	- progress bar?
+
+- favicon support
+	- use webkit favicon database?
 
 
 BUGS

@@ -6,14 +6,24 @@
 #include <gdk/gdkkeysyms.h>
 #include <webkit/webkit.h>
 #include <glib/gstdio.h>
-#include "args.h"
 #include "config.h"
 #include "browser.h"
 #include "tab.h"
-#include "callbacks.h"
 #include "utils.h"
 
-gboolean browser_key_press_event(GtkWidget *widget, GdkEventKey *event, Browser *b)
+static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event, Browser *b);
+
+void browser_close(Browser *b)
+{
+	int i;
+	int n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook));
+
+	for (i = 0; i < n; i++) {
+		browser_close_tab(b, browser_get_current_tab(b));
+	}
+}
+
+static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event, Browser *b)
 {
 	if (event->type != GDK_KEY_PRESS) {
 		return FALSE;
@@ -34,10 +44,10 @@ gboolean browser_key_press_event(GtkWidget *widget, GdkEventKey *event, Browser 
 	if ((event->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK ) {
 		switch(g) {
 		case GDK_KEY_l:
-			browser_show_uribar(b);
+			browser_show_uri_entry(b);
 			return TRUE;
 		case GDK_KEY_f:
-			browser_toggle_widget(b, b->searchbar);
+			browser_show_search_entry(b);
 			return TRUE;
 		case GDK_KEY_g:
 			tab_and_go(b);
@@ -64,8 +74,8 @@ gboolean browser_key_press_event(GtkWidget *widget, GdkEventKey *event, Browser 
 			browser_switch_tab(b, TRUE);
 			return TRUE;
 		case GDK_KEY_t:
-			tab_new(b, FALSE);
-			gtk_widget_grab_focus(b->bar);
+			tab_new(b, "New Tab");
+			gtk_widget_grab_focus(b->uri_entry);
 			return TRUE;
 		case GDK_KEY_w:
 			browser_close_tab(b, t);
@@ -86,68 +96,69 @@ gboolean browser_key_press_event(GtkWidget *widget, GdkEventKey *event, Browser 
 			tab_view_source(t);
 			return TRUE;
 		case GDK_KEY_Return:
-			tab_load_uri(t, g_strconcat(DEFAULT_SEARCH, gtk_entry_get_text(GTK_ENTRY(b->bar)), NULL));
+			tab_load_uri(t, g_strconcat(DEFAULT_SEARCH, gtk_entry_get_text(GTK_ENTRY(b->uri_entry)), NULL));
 			return TRUE;
 		default:
 			return FALSE;
 		}
 	}
 
-	if (gtk_widget_has_focus(b->bar) && g == GDK_KEY_Escape) {
-		gtk_widget_grab_focus(GTK_WIDGET(b->notebook)); 
-		return TRUE; 
+	/* Esc : change focus to webview, hide searchbar if currently focused */
+	if (g == GDK_KEY_Escape) {
+		if (gtk_widget_has_focus(b->search_entry)) {
+			gtk_widget_hide(b->searchbar);
+		}
+		browser_focus_tab_view(b);
 	}
 
-	if (gtk_widget_has_focus(b->searchbar)) {
-		if (g == GDK_KEY_Escape) {
-			browser_toggle_widget(b, b->searchbar);
-			browser_focus_tab_view(b); 
-			return TRUE; 
-		}
-
-		if ((g == GDK_KEY_Return) && (event->state & GDK_MOD1_MASK) == GDK_MOD1_MASK) { 
-			tab_search_reverse(t, b->searchbar);
-		}
+	/* Ctrl+Shift+g : reverse search */
+	if ((g == GDK_KEY_Return) && (event->state & GDK_MOD1_MASK) == GDK_MOD1_MASK) {
+		tab_search_reverse(t, gtk_entry_get_text(GTK_ENTRY(b->search_entry)));
+		return TRUE;
 	}
 	
 	return FALSE; 
 }
 
 /* link hovering callback */
-void browser_link_hover(WebKitWebView *page, const gchar *title, const gchar *link, Browser *b)
+void browser_link_hover_cb(WebKitWebView *page, const gchar *title, const gchar *link, Browser *b)
 {
-	gtk_statusbar_push(GTK_STATUSBAR(b->status), 0, (link) ? link : ""); 
+	gtk_statusbar_pop(GTK_STATUSBAR(b->statusbar), b->status_context_id); 
+	if (link) {
+		gtk_statusbar_push(GTK_STATUSBAR(b->statusbar), b->status_context_id, link); 
+	}
 }
 
 /* uri-bar callback */
-void browser_uribar_activated(GtkWidget *entry, Browser *b)
+static void browser_uri_entry_activated_cb(GtkWidget *entry, Browser *b)
 {
 	Tab *t = browser_get_current_tab(b);
 
-	tab_load_uri(t, g_strdup(gtk_entry_get_text(GTK_ENTRY(b->bar))));
-	gtk_widget_grab_focus(GTK_WIDGET(t->view));
- 
-	if (b->hide) {
-		gtk_widget_hide(b->bar);
-	}
-	
-	b->hide = FALSE;
+	tab_load_uri(t, g_strdup(gtk_entry_get_text(GTK_ENTRY(b->uri_entry))));
+}
+
+/* search-entry callback */
+static void browser_search_entry_activated_cb(GtkWidget *entry, Browser *b)
+{
+	Tab *t = browser_get_current_tab(b);
+
+	tab_search_forward(t, gtk_entry_get_text(GTK_ENTRY(b->search_entry)));
 }
 
 Tab *browser_get_tab(Browser *b, int tab_num)
 {
-	return (Tab *)g_object_get_qdata(G_OBJECT(gtk_notebook_get_nth_page(b->notebook, tab_num)), b->term_data_id);
+	return (Tab *)g_object_get_qdata(G_OBJECT(gtk_notebook_get_nth_page(GTK_NOTEBOOK(b->notebook), tab_num)), b->term_data_id);
 }
 
 Tab *browser_get_current_tab(Browser *b)
 {
-	return browser_get_tab(b, gtk_notebook_get_current_page(b->notebook));
+	return browser_get_tab(b, gtk_notebook_get_current_page(GTK_NOTEBOOK(b->notebook)));
 }
 
 /* get the tab number containing the tab specified */
 int browser_get_tab_num(Browser *b, Tab *t)
 {
-	return gtk_notebook_page_num(b->notebook, t->scroll);
+	return gtk_notebook_page_num(GTK_NOTEBOOK(b->notebook), t->scroll);
 }
 
 int browser_get_current_tab_num(Browser *b)
@@ -158,14 +169,14 @@ int browser_get_current_tab_num(Browser *b)
 /* close tab, and quit if there are no tabs */
 void browser_close_tab(Browser *b, Tab *t)
 {
-	gtk_notebook_remove_page(b->notebook, gtk_notebook_get_current_page(b->notebook));
+	gtk_notebook_remove_page(GTK_NOTEBOOK(b->notebook), gtk_notebook_get_current_page(GTK_NOTEBOOK(b->notebook)));
 	g_free(t);
 
-	if (gtk_notebook_get_n_pages(b->notebook) == 1) {
+	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 1) {
 		/* hide notebook tabs when only one tab */
-		gtk_notebook_set_show_tabs(b->notebook, FALSE);
+		gtk_notebook_set_show_tabs(GTK_NOTEBOOK(b->notebook), FALSE);
 		browser_focus_tab_view(b);
-	} else if (gtk_notebook_get_n_pages(b->notebook) == 0) { 
+	} else if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 0) { 
 		/* exit if no tabs remaining */
 		gtk_main_quit(); 
 	}
@@ -175,23 +186,19 @@ void browser_close_tab(Browser *b, Tab *t)
 void browser_switch_tab(Browser *b, gboolean forward)
 {
 	int tab_num;
-	int current = gtk_notebook_get_current_page(b->notebook);
-	int n = gtk_notebook_get_n_pages(b->notebook);
+	int current = gtk_notebook_get_current_page(GTK_NOTEBOOK(b->notebook));
+	int n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook));
 
 	tab_num = (forward) ? mod(current + 1, n) : mod(current - 1, n);
 
-	gtk_notebook_set_current_page(b->notebook, tab_num);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), tab_num);
 }
 
-/* toggle visibility of browser widget and grab focus if shown */
-void browser_toggle_widget(Browser *b, GtkWidget *widget)
+/* show searchbar and give focus to entry */
+void browser_show_search_entry(Browser *b)
 {
-	if (!gtk_widget_get_visible(widget)) {
-		gtk_widget_show(widget);
-		gtk_widget_grab_focus(widget);
-	} else {
-		gtk_widget_hide(widget);
-	}
+	gtk_widget_show(b->searchbar);
+	gtk_widget_grab_focus(b->search_entry);
 }
 
 /* an alternative to the regular tab command, combines tabbing and history command into one */
@@ -206,18 +213,18 @@ void tab_and_go(Browser *b)
 	if (strcmp(returned, "") == 0) {
 		browser_focus_tab_view(b); 
 	} else { 
-		Tab *t = tab_new(b, FALSE);
+		Tab *t = tab_new(b, "Loading...");
 		tab_load_uri(t, returned);
 		g_free(returned);
 	}
 }
 
-void browser_back(Browser *b)
+void browser_go_back(Browser *b)
 {
 	tab_back(browser_get_current_tab(b));
 }
 
-void browser_forward(Browser *b)
+void browser_go_forward(Browser *b)
 {
 	tab_forward(browser_get_current_tab(b));
 }
@@ -227,20 +234,18 @@ void browser_reload(Browser *b)
 	tab_reload(browser_get_current_tab(b), FALSE);
 }
 
-void browser_home(Browser *b)
+void browser_go_home(Browser *b)
 {
 	tab_home(browser_get_current_tab(b));
 }
 
-/* if the bar isn't visible, show it and set the b->hide flag to TRUE*/
-void browser_show_uribar(Browser *b)
+void browser_show_uri_entry(Browser *b)
 {
-	if (!gtk_widget_get_visible(b->bar)) {
-		gtk_widget_show(b->bar);
-		b->hide = TRUE;
+	if (!gtk_widget_get_visible(b->uri_entry)) {
+		gtk_widget_show(b->uri_entry);
 	}
  
-	gtk_widget_grab_focus(GTK_WIDGET(b->bar));
+	gtk_widget_grab_focus(GTK_WIDGET(b->uri_entry));
 }
 
 /* call the history command. should we do it ASYNC?*/
@@ -268,7 +273,7 @@ void browser_history(Browser *b)
 }
 
 /* focus on tab after switching, aka title, statusbar, view, etc */
-void browser_tab_switched(GtkNotebook *notebook, GtkWidget *page, guint page_num, Browser *b)
+static void browser_tab_switched_cb(GtkNotebook *notebook, GtkWidget *page, guint page_num, Browser *b)
 {
 	Tab *t = browser_get_tab(b, page_num);
 	const char *uri = webkit_web_view_get_uri(t->view);
@@ -276,8 +281,10 @@ void browser_tab_switched(GtkNotebook *notebook, GtkWidget *page, guint page_num
 
 	/* reset browser state for new tab */
 	gtk_window_set_title(GTK_WINDOW(b->window), (title) ? title : DEFAULT_BROWSER_TITLE);
-	gtk_entry_set_text(GTK_ENTRY(b->bar), (uri) ? uri : "");
-	gtk_statusbar_push(GTK_STATUSBAR(b->status), 0, "");
+	gtk_entry_set_text(GTK_ENTRY(b->uri_entry), (uri) ? uri : "");
+	tab_update_progress(t);
+	gtk_statusbar_pop(GTK_STATUSBAR(b->statusbar), b->status_context_id);
+	gtk_statusbar_push(GTK_STATUSBAR(b->statusbar), b->status_context_id, "");
 
 	/* update toolbar buttons */
 	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
@@ -300,14 +307,16 @@ Browser *browser_new(void)
 	
 	b = g_new0(Browser, 1);
 	
-	b->term_data_id = g_quark_from_static_string("s");
+	b->term_data_id = g_quark_from_static_string("tab");
 
 	b->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	b->vbox = gtk_vbox_new(FALSE, 0);
-	b->bar = gtk_entry_new();
-	b->notebook = GTK_NOTEBOOK(gtk_notebook_new());
-	b->searchbar = gtk_entry_new();
-	b->status = gtk_statusbar_new();
+	b->uri_entry = gtk_entry_new();
+	b->notebook = gtk_notebook_new();
+	b->searchbar = gtk_hbox_new(FALSE, 0);
+	b->search_label = gtk_label_new("Search:");
+	b->search_entry = gtk_entry_new();
+	b->statusbar = gtk_statusbar_new();
 
 	/* toolbar */
 	b->toolbar = gtk_toolbar_new();
@@ -320,25 +329,32 @@ Browser *browser_new(void)
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->back_button), -1);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->forward_button), -1);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->refresh_button), -1);
-	gtk_container_add(GTK_CONTAINER(tool_item), b->bar);
+	gtk_container_add(GTK_CONTAINER(tool_item), b->uri_entry);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(tool_item), -1);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->home_button), -1);
+
+	/* searchbar */
+	gtk_box_pack_start(GTK_BOX(b->searchbar), b->search_label, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(b->searchbar), b->search_entry, TRUE, TRUE, 5);
 	
 	gtk_box_pack_start(GTK_BOX(b->vbox), b->toolbar, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(b->vbox), GTK_WIDGET(b->notebook), TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(b->vbox), b->notebook, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(b->vbox), b->searchbar, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(b->vbox), b->status, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(b->vbox), b->statusbar, FALSE, FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(b->window), b->vbox);
 
 	/* basic settings */
 	gtk_window_set_wmclass(GTK_WINDOW(b->window), "hydra", "Hydra");
 	gtk_window_set_role(GTK_WINDOW(b->window), "Hydra");
 	gtk_window_set_default_size(GTK_WINDOW(b->window), DEFAULT_HEIGHT, DEFAULT_WIDTH);
-	gtk_entry_set_has_frame(GTK_ENTRY(b->bar), FALSE);
+
+//	gtk_entry_set_has_frame(GTK_ENTRY(b->uri_entry), FALSE);
 	gtk_orientable_set_orientation(GTK_ORIENTABLE(b->toolbar), GTK_ORIENTATION_HORIZONTAL);
 	gtk_tool_item_set_expand(tool_item, TRUE);	// allow uri-bar to expand
-	gtk_notebook_set_scrollable(b->notebook, TRUE);
-	gtk_notebook_set_show_border(b->notebook, FALSE);
+
+	gtk_notebook_set_scrollable(GTK_NOTEBOOK(b->notebook), TRUE);
+	gtk_notebook_set_show_border(GTK_NOTEBOOK(b->notebook), FALSE);
+
 	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), FALSE);
 	gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), FALSE);
 
@@ -346,59 +362,35 @@ Browser *browser_new(void)
 
 	/* basic webkit settings */
 	g_object_set(G_OBJECT(b->webkit_settings),
-		"user_agent", DEFAULT_USER_AGENT, NULL);
+		"user_agent", DEFAULT_USER_AGENT,
+		"enable-plugins", TRUE, NULL);
+
+	b->status_context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(b->statusbar), "link-hover");
 
 	b->session = webkit_get_default_session();
-	b->jar = soup_cookie_jar_text_new(g_build_filename(g_get_home_dir(),	DEFAULT_COOKIE_FILE, NULL), FALSE);
+	b->jar = soup_cookie_jar_text_new(g_build_filename(g_get_home_dir(), DEFAULT_COOKIE_FILE, NULL), FALSE);
 	soup_session_add_feature(b->session, SOUP_SESSION_FEATURE(b->jar));
 
-	t = tab_new(b, FALSE);
+	t = tab_new(b, "New Tab");
+
+	/* FIXME: store t */
+	if (t != NULL){}
 
 	/* signals */
-	g_signal_connect_swapped(G_OBJECT(b->back_button), "clicked", G_CALLBACK(browser_back), b);
-	g_signal_connect_swapped(G_OBJECT(b->forward_button), "clicked", G_CALLBACK(browser_forward), b);
+	g_signal_connect_swapped(G_OBJECT(b->back_button), "clicked", G_CALLBACK(browser_go_back), b);
+	g_signal_connect_swapped(G_OBJECT(b->forward_button), "clicked", G_CALLBACK(browser_go_forward), b);
 	g_signal_connect_swapped(G_OBJECT(b->refresh_button), "clicked", G_CALLBACK(browser_reload), b);
-	g_signal_connect(G_OBJECT(b->bar), "activate", G_CALLBACK(browser_uribar_activated), b);
-	g_signal_connect_swapped(G_OBJECT(b->home_button), "clicked", G_CALLBACK(browser_home), b);
-	g_signal_connect_swapped(G_OBJECT(b->searchbar), "activate", G_CALLBACK(tab_search_forward), t);
-	g_signal_connect(G_OBJECT(b->notebook), "switch-page", G_CALLBACK(browser_tab_switched), b);
-	g_signal_connect(G_OBJECT(b->window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
-	g_signal_connect(G_OBJECT(b->window), "key-press-event", G_CALLBACK(browser_key_press_event), b);
+	g_signal_connect(G_OBJECT(b->uri_entry), "activate", G_CALLBACK(browser_uri_entry_activated_cb), b);
+	g_signal_connect_swapped(G_OBJECT(b->home_button), "clicked", G_CALLBACK(browser_go_home), b);
+	g_signal_connect_swapped(G_OBJECT(b->search_entry), "activate", G_CALLBACK(browser_search_entry_activated_cb), b);
+	g_signal_connect(G_OBJECT(b->notebook), "switch-page", G_CALLBACK(browser_tab_switched_cb), b);
+	g_signal_connect_swapped(G_OBJECT(b->window), "destroy", G_CALLBACK(browser_close), b);
+	g_signal_connect(G_OBJECT(b->window), "key-press-event", G_CALLBACK(browser_key_press_event_cb), b);
 
 	gtk_widget_show_all(b->window);
 	gtk_widget_hide(b->searchbar);
-	gtk_widget_grab_focus(b->bar);
+
+	gtk_widget_grab_focus(b->uri_entry);
 
 	return b;
-}
-
-/* main entry-point */
-int main(int argc, char *argv[])
-{
-	Args *args;
-	Browser *b;
-
-	/* initialize GTK */
-	gtk_init(&argc, &argv);
-
-	args = args_parse(argc, argv);
-
-	b = browser_new();
-
-	if (args->fullscreen) {
-		gtk_window_fullscreen(GTK_WINDOW(b->window));
-	}
-
-	/*
-	if (argc == 2) {
-		tab_load_uri(browser_get_current_tab(b), argv[1]);
-	}
-	*/
-
-	/* load homepage on startup */
-	tab_load_uri(browser_get_current_tab(b), DEFAULT_HOME);
-
-	gtk_main();
-
-	return 0;
 }

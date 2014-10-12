@@ -1,13 +1,15 @@
-#ifndef TAB_H
-#define TAB_H
+#ifndef _TAB_H_
+#define _TAB_H_
 
 typedef struct _tab { 
 	gpointer parent;			/* back pointer to parent Browser */
 	GtkWidget *scroll;			/* scrolled window */
 	WebKitWebView *view;		/* webview - child of scroll */
-	GtkWidget *label;			/* notebook label */
+	GtkWidget *hbox;			/* notebook label container */
+	GtkWidget *label;			/* notebook text label */
+	GtkWidget *spinner;			/* progress indicator */
 	gchar *title;				/* title of current page */
-	gint progress; 				/* progress of page being loaded */
+	double progress; 				/* progress of page being loaded */
 	guint status_context_id;	/* statusbar id */
 } Tab;
 
@@ -18,7 +20,7 @@ typedef struct _tab {
 
 #include "browser.h"
 
-Tab *tab_new(Browser *b, gboolean background);
+Tab *tab_new(Browser *b, char *title);
 void tab_load_uri(Tab *t, gchar *uri);
 void tab_forward(Tab *t);
 void tab_back(Tab *t);
@@ -26,13 +28,10 @@ void tab_reload(Tab *t, gboolean bypass);
 void tab_home(Tab *t);
 void tab_zoom(Tab *t, gboolean in);
 void tab_zoom_reset(Tab *t);
-WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab *t);
-void tab_title_changed(WebKitWebView *v, GParamSpec *pspec, Tab *t);
-void tab_progress_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t);
 void tab_update_title(Tab *t);
-void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t);
+void tab_update_progress(Tab *t);
 void tab_view_source(Tab *t);
-void tab_search_forward(Tab *t, GtkWidget *entry);
-void tab_search_reverse(Tab *t, GtkWidget *entry);
+void tab_search_forward(Tab *t, const char *str);
+void tab_search_reverse(Tab *t, const char *str);
 
-#endif /* TAB_H */
+#endif /* _TAB_H_ */

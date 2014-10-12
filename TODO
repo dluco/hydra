@@ -3,6 +3,7 @@
 - close button on tabs
 - close browser keybinding : Ctrl+q
 - fix progress handling
+- use $WWW_HOME for homepage setting (also use config file as backup? or override WWW_HOME?)
 
 - favicon support
 	- use webkit favicon database?

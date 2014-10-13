@@ -11,13 +11,6 @@ typedef struct _Browser {
 	GtkWidget *toolbar;
 	GtkToolItem *back_button, *forward_button, *refresh_button, *home_button;
 	GtkWidget *notebook; 
-	GtkWidget *searchbar; 
-	GtkWidget *search_label; 
-	GtkWidget *search_entry; 
-	GtkToolItem *search_previous; 
-	GtkToolItem *search_next; 
-	GtkToolItem *search_case;
-	GtkToolItem *search_hide; 
 	GtkWidget *statusbar;
 	GQuark term_data_id;
 	gchar *title;

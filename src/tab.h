@@ -3,11 +3,19 @@
 
 typedef struct _tab { 
 	gpointer parent;			/* back pointer to parent Browser */
-	GtkWidget *scroll;			/* scrolled window */
-	WebKitWebView *view;		/* webview - child of scroll */
+	GtkWidget *vbox;			/* vbox */
+	GtkWidget *scroll;			/* scrolled window - child of vbox */
+	WebKitWebView *view;		/* webview - child of scrolled window */
 	GtkWidget *hbox;			/* notebook label container */
 	GtkWidget *label;			/* notebook text label */
 	GtkWidget *spinner;			/* progress indicator */
+	GtkWidget *searchbar; 
+	GtkWidget *search_label; 
+	GtkWidget *search_entry; 
+	GtkToolItem *search_previous; 
+	GtkToolItem *search_next; 
+	GtkToolItem *search_case;
+	GtkToolItem *search_hide; 
 	gchar *title;				/* title of current page */
 	double progress; 				/* progress of page being loaded */
 	guint status_context_id;	/* statusbar id */
@@ -30,6 +38,7 @@ void tab_zoom(Tab *t, gboolean in);
 void tab_zoom_reset(Tab *t);
 void tab_update_title(Tab *t);
 void tab_view_source(Tab *t);
+void tab_show_search_entry(Tab *t);
 void tab_search_forward(Tab *t, const char *str, gboolean case_sensitive);
 void tab_search_reverse(Tab *t, const char *str, gboolean case_sensitive);
 

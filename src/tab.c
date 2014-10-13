@@ -9,6 +9,9 @@
 
 #define DOWNLOAD_LOCATION g_get_home_dir()
 
+static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t);
+static void tab_search_previous_cb(GtkWidget *widget, Tab *t);
+static void tab_search_next_cb(GtkWidget *widget, Tab *t);
 static WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab *t);
 static void tab_download_cb(WebKitWebView *web_view, GObject *d, gpointer user_data);
 static void tab_title_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t);
@@ -16,37 +19,92 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 static void tab_progress_changed_cb(WebKitWebView *view, GParamSpec *pspec, Tab *t);
 static void tab_search(Tab *t, const char *str, gboolean forward, gboolean case_sensitive);
 
+/* search-entry callback */
+static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t)
+{
+	tab_search_forward(t, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
+		gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)));
+}
+
+static void tab_search_previous_cb(GtkWidget *widget, Tab *t)
+{
+	tab_search_reverse(t, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
+		gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)));
+}
+
+static void tab_search_next_cb(GtkWidget *widget, Tab *t)
+{
+	tab_search_forward(t, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
+		gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)));
+}
+
 /* create new Tab with parent Browser */
 Tab *tab_new(Browser *b, char *title)
 {
 	Tab *t;
-//	gchar *stylesheet;
+	GtkToolItem *tool_item;
 
 	t = g_new0(Tab, 1);
 
-	t->scroll = gtk_scrolled_window_new(NULL, NULL);
-	t->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
-	t->hbox = gtk_hbox_new(FALSE, 0);
-	t->label = gtk_label_new(title);
 	t->parent = b;
+	t->vbox = gtk_vbox_new(FALSE, 0);
 
-	/* label */
+	/* notebook label */
+	t->hbox = gtk_hbox_new(FALSE, 0);
 	t->spinner = gtk_spinner_new();
+	t->label = gtk_label_new(title);
+	gtk_label_set_max_width_chars(GTK_LABEL(t->label), TAB_TITLE_MAX);
+	gtk_label_set_ellipsize(GTK_LABEL(t->label), PANGO_ELLIPSIZE_END);
 	gtk_box_pack_start(GTK_BOX(t->hbox), t->spinner, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(t->hbox), t->label, FALSE, FALSE, 5);
-
+	/* hide spinner initially */
 	gtk_widget_show_all(t->hbox);
 	gtk_widget_hide(t->spinner);
 
+	/* scrolled webview */
+	t->scroll = gtk_scrolled_window_new(NULL, NULL);
+	t->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
 	gtk_container_add(GTK_CONTAINER(t->scroll), GTK_WIDGET(t->view));
 
-	int index = gtk_notebook_append_page(GTK_NOTEBOOK(b->notebook), t->scroll, t->hbox);
-	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(b->notebook), t->scroll, TRUE);
-	gtk_label_set_max_width_chars(GTK_LABEL(t->label), TAB_TITLE_MAX);
-	gtk_label_set_ellipsize(GTK_LABEL(t->label), PANGO_ELLIPSIZE_END);
+	gtk_box_pack_start(GTK_BOX(t->vbox), t->scroll, TRUE, TRUE, 0);
 
-	/* hide tabs if only one */
-	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(b->notebook), (index > 0));
+	/* searchbar */
+	t->searchbar = gtk_toolbar_new();
+	gtk_orientable_set_orientation(GTK_ORIENTABLE(t->searchbar), GTK_ORIENTATION_HORIZONTAL);
+	gtk_toolbar_set_icon_size(GTK_TOOLBAR(t->searchbar), GTK_ICON_SIZE_MENU);
+	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(t->searchbar), FALSE);
+	/* search label */
+	t->search_label = gtk_label_new("Search:");
+	tool_item = gtk_tool_item_new();
+	gtk_container_set_border_width(GTK_CONTAINER(tool_item), 5);
+	gtk_container_add(GTK_CONTAINER(tool_item), t->search_label);
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(tool_item), -1);
+	/* search entry */
+	t->search_entry = gtk_entry_new();
+	tool_item = gtk_tool_item_new();
+	gtk_container_set_border_width(GTK_CONTAINER(tool_item), 1);
+	gtk_container_add(GTK_CONTAINER(tool_item), t->search_entry);
+	gtk_tool_item_set_expand(tool_item, TRUE);	// allow search_entry to expand
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(tool_item), -1);
+	/* search previous button */
+	t->search_previous = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(t->search_previous), -1);
+	/* search next button */
+	t->search_next = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(t->search_next), -1);
+	/* toggle search case sensitivity button */
+	t->search_case = gtk_toggle_tool_button_new();
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(t->search_case), "Match Case");
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(t->search_case), -1);
+	/* separator item - separates search items from close button */
+	tool_item = gtk_separator_tool_item_new();
+	gtk_tool_item_set_expand(tool_item, TRUE);
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(tool_item), -1);
+	/* searchbar hide button */
+	t->search_hide = gtk_tool_button_new_from_stock(GTK_STOCK_CLOSE);
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(t->search_hide), -1);
+
+	gtk_box_pack_start(GTK_BOX(t->vbox), t->searchbar, FALSE, FALSE, 0);
 
 	/*callbacks*/
 	g_signal_connect(G_OBJECT(t->view), "notify::title", G_CALLBACK(tab_title_changed), t);
@@ -55,6 +113,10 @@ Tab *tab_new(Browser *b, char *title)
 	g_signal_connect(G_OBJECT(t->view), "hovering-over-link", G_CALLBACK(browser_link_hover_cb), b);
 	g_signal_connect(G_OBJECT(t->view), "create-web-view", G_CALLBACK(tab_new_requested), t);
 	g_signal_connect(G_OBJECT(t->view), "download-requested", G_CALLBACK(tab_download_cb), t->view);
+	g_signal_connect(G_OBJECT(t->search_entry), "activate", G_CALLBACK(tab_search_entry_activated_cb), t);
+	g_signal_connect(G_OBJECT(t->search_previous), "clicked", G_CALLBACK(tab_search_previous_cb), t);
+	g_signal_connect(G_OBJECT(t->search_next), "clicked", G_CALLBACK(tab_search_next_cb), t);
+	g_signal_connect_swapped(G_OBJECT(t->search_hide), "clicked", G_CALLBACK(gtk_widget_hide), t->searchbar);
 	
 	/* apply webkit settings */
 	webkit_web_view_set_settings(t->view, b->webkit_settings);
@@ -65,25 +127,20 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(t->scroll), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(t->scroll), GTK_SHADOW_NONE);
 
-	/* load user stylesheet */
-//	stylesheet = g_strconcat("file://", g_get_home_dir(), "/", DEFAULT_STYLE_SHEET, NULL);
-
-	/* FIXME: this should be set by config, not here */
-//	g_object_set(G_OBJECT(b->webkitsettings),
-//		"user_agent", DEFAULT_USER_AGENT, NULL);
-//		"enable-page-cache", TRUE,
-//		"enable-java-applet", FALSE,
-//		"user-stylesheet-uri", stylesheet, NULL);					 
-
-//	g_free(stylesheet);
+	/* add to notebook */
+	int index = gtk_notebook_append_page(GTK_NOTEBOOK(b->notebook), t->vbox, t->hbox);
+	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(b->notebook), t->vbox, TRUE);
+	/* hide tabs if only one */
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(b->notebook), (index > 0));
 
 	/* setup widgets, automatically focus the addressbar */
 	g_object_set_qdata(G_OBJECT(gtk_notebook_get_nth_page(GTK_NOTEBOOK(b->notebook), index)), b->term_data_id, t);
 	gtk_statusbar_pop(GTK_STATUSBAR(b->statusbar), b->status_context_id);
 	gtk_statusbar_push(GTK_STATUSBAR(b->statusbar), b->status_context_id, "");
 
-	gtk_widget_show_all(b->window);
-	gtk_widget_hide(b->searchbar);
+	/* hide searchbar initally */
+	gtk_widget_show_all(t->vbox);
+	gtk_widget_hide(t->searchbar);
 	
 	/* TODO: switch to the new tab if it has not been opened in background */
 	/*
@@ -254,6 +311,13 @@ void tab_view_source(Tab *t)
 {
 	webkit_web_view_set_view_source_mode(t->view, !webkit_web_view_get_view_source_mode(t->view)); 
 	webkit_web_view_reload(t->view);
+}
+
+/* show searchbar and give focus to entry */
+void tab_show_search_entry(Tab *t)
+{
+	gtk_widget_show(t->searchbar);
+	gtk_widget_grab_focus(t->search_entry);
 }
 
 static void tab_search(Tab *t, const char *str, gboolean forward, gboolean case_sensitive)

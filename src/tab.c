@@ -14,7 +14,7 @@ static void tab_download_cb(WebKitWebView *web_view, GObject *d, gpointer user_d
 static void tab_title_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t);
 static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t);
 static void tab_progress_changed_cb(WebKitWebView *view, GParamSpec *pspec, Tab *t);
-static void tab_search(Tab *t, const char *str, gboolean forward);
+static void tab_search(Tab *t, const char *str, gboolean forward, gboolean case_sensitive);
 
 /* create new Tab with parent Browser */
 Tab *tab_new(Browser *b, char *title)
@@ -256,17 +256,17 @@ void tab_view_source(Tab *t)
 	webkit_web_view_reload(t->view);
 }
 
-static void tab_search(Tab *t, const char *str, gboolean forward)
+static void tab_search(Tab *t, const char *str, gboolean forward, gboolean case_sensitive)
 {
-	webkit_web_view_search_text(t->view, str, FALSE, forward, TRUE);
+	webkit_web_view_search_text(t->view, str, case_sensitive, forward, TRUE);
 }
 
-void tab_search_forward(Tab *t, const char *str)
+void tab_search_forward(Tab *t, const char *str, gboolean case_sensitive)
 {
-	tab_search(t, str, TRUE);
+	tab_search(t, str, TRUE, case_sensitive);
 }
 
-void tab_search_reverse(Tab *t, const char *str)
+void tab_search_reverse(Tab *t, const char *str, gboolean case_sensitive)
 {
-	tab_search(t, str, FALSE);
+	tab_search(t, str, FALSE, case_sensitive);
 }

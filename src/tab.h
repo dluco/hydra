@@ -30,7 +30,7 @@ void tab_zoom(Tab *t, gboolean in);
 void tab_zoom_reset(Tab *t);
 void tab_update_title(Tab *t);
 void tab_view_source(Tab *t);
-void tab_search_forward(Tab *t, const char *str);
-void tab_search_reverse(Tab *t, const char *str);
+void tab_search_forward(Tab *t, const char *str, gboolean case_sensitive);
+void tab_search_reverse(Tab *t, const char *str, gboolean case_sensitive);
 
 #endif /* _TAB_H_ */

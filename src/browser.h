@@ -14,6 +14,10 @@ typedef struct _Browser {
 	GtkWidget *searchbar; 
 	GtkWidget *search_label; 
 	GtkWidget *search_entry; 
+	GtkToolItem *search_previous; 
+	GtkToolItem *search_next; 
+	GtkToolItem *search_case;
+	GtkToolItem *search_hide; 
 	GtkWidget *statusbar;
 	GQuark term_data_id;
 	gchar *title;
@@ -27,11 +31,12 @@ typedef struct _Browser {
 
 #define DEFAULT_BROWSER_TITLE "Hydra"
 
-void browser_close(Browser *b);
+void browser_link_hover_cb(WebKitWebView *page, const gchar *title, const gchar *link, Browser *b);
 Tab *browser_get_tab(Browser *b, int tab_num);
 Tab *browser_get_current_tab(Browser *b);
 int browser_get_tab_num(Browser *b, Tab *t);
 int browser_get_current_tab_num(Browser *b);
+void browser_close(Browser *b);
 void browser_close_tab(Browser *b, Tab *t);
 void browser_switch_tab(Browser *b, gboolean forward);
 void browser_history(Browser *b);
@@ -41,7 +46,6 @@ void browser_go_back(Browser *b);
 void browser_go_forward(Browser *b);
 void browser_go_home(Browser *b);
 void browser_reload(Browser *b);
-void browser_link_hover_cb(WebKitWebView *page, const gchar *title, const gchar *link, Browser *b);
 void browser_show_search_entry(Browser *b);
 void browser_focus_tab_view(Browser *b);
 Browser *browser_new(void);

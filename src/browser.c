@@ -80,6 +80,9 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 		case GDK_KEY_w:
 			browser_close_tab(b, t);
 			return TRUE;
+		case GDK_KEY_q:
+			browser_close(b);
+			return TRUE;
 		case GDK_KEY_bracketright:
 			tab_zoom(t, TRUE);
 			return TRUE;
@@ -282,7 +285,6 @@ static void browser_tab_switched_cb(GtkNotebook *notebook, GtkWidget *page, guin
 	/* reset browser state for new tab */
 	gtk_window_set_title(GTK_WINDOW(b->window), (title) ? title : DEFAULT_BROWSER_TITLE);
 	gtk_entry_set_text(GTK_ENTRY(b->uri_entry), (uri) ? uri : "");
-	tab_update_progress(t);
 	gtk_statusbar_pop(GTK_STATUSBAR(b->statusbar), b->status_context_id);
 	gtk_statusbar_push(GTK_STATUSBAR(b->statusbar), b->status_context_id, "");
 

@@ -36,6 +36,7 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_box_pack_start(GTK_BOX(t->hbox), t->label, FALSE, FALSE, 5);
 
 	gtk_widget_show_all(t->hbox);
+	gtk_widget_hide(t->spinner);
 
 	gtk_container_add(GTK_CONTAINER(t->scroll), GTK_WIDGET(t->view));
 
@@ -208,7 +209,9 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 	switch(webkit_web_view_get_load_status(t->view)) {
 	case WEBKIT_LOAD_PROVISIONAL:
 		gtk_label_set_text(GTK_LABEL(t->label), "Loading...");
+		/* start and show spinner */
 		gtk_spinner_start(GTK_SPINNER(t->spinner));
+		gtk_widget_show(t->spinner);
 		break;
 	case WEBKIT_LOAD_COMMITTED:
 		uri = webkit_web_view_get_uri(t->view);
@@ -228,8 +231,9 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 		break;
 	case WEBKIT_LOAD_FINISHED:
 		t->progress = 1.0;
+		/* hide and stop spinner */
+		gtk_widget_hide(t->spinner);
 		gtk_spinner_stop(GTK_SPINNER(t->spinner));
-		tab_update_progress(t);
 		break;
 	default:
 		break;
@@ -243,18 +247,6 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 static void tab_progress_changed_cb(WebKitWebView *view, GParamSpec *pspec, Tab *t)
 {
 	t->progress = webkit_web_view_get_progress(t->view);
-	tab_update_progress(t);
-}
-
-void tab_update_progress(Tab *t)
-{
-	if (t->progress > 0.0 && t->progress < 1.0) {
-		/* show spinner */
-		gtk_widget_show(t->spinner);
-	} else {
-		/* hide spinner */
-		gtk_widget_hide(t->spinner);
-	}
 }
 
 /* toggle view source mode */

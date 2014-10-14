@@ -9,10 +9,12 @@
 
 #define DOWNLOAD_LOCATION g_get_home_dir()
 
+/* callbacks */
 static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t);
 static void tab_search_previous_cb(GtkWidget *widget, Tab *t);
 static void tab_search_next_cb(GtkWidget *widget, Tab *t);
 static void tab_search_highlight_cb(GtkWidget *widget, Tab *t);
+static void tab_search_case_cb(GtkWidget *widget, Tab *t);
 static WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab *t);
 static void tab_download_cb(WebKitWebView *web_view, GObject *d, gpointer user_data);
 static void tab_title_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t);
@@ -29,28 +31,14 @@ static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t)
 
 static void tab_search_entry_text_inserted_cb(GtkEditable *editable, gchar *new_text, gint new_length, gpointer position, Tab *t)
 {
-	/* update highlighted matches, if button is set */
-	if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_highlight))) {
-		/* remove previous highlighting */
-		webkit_web_view_unmark_text_matches(t->view);
-		/* highlight new text */
-		webkit_web_view_mark_text_matches(t->view, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
-			gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)), 0);
-		webkit_web_view_set_highlight_text_matches(t->view, TRUE);
-	}
+	/* update text matches */
+	tab_update_search_highlight(t);
 }
 
 static void tab_search_entry_text_deleted_cb(GtkEditable *editable, gint start, gint end, Tab *t)
 {
-	/* update highlighted matches, if button is set */
-	if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_highlight))) {
-		/* remove previous highlighting */
-		webkit_web_view_unmark_text_matches(t->view);
-		/* highlight new text */
-		webkit_web_view_mark_text_matches(t->view, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
-			gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)), 0);
-		webkit_web_view_set_highlight_text_matches(t->view, TRUE);
-	}
+	/* update text matches */
+	tab_update_search_highlight(t);
 }
 
 static void tab_search_previous_cb(GtkWidget *widget, Tab *t)
@@ -67,15 +55,17 @@ static void tab_search_next_cb(GtkWidget *widget, Tab *t)
 
 static void tab_search_highlight_cb(GtkWidget *widget, Tab *t)
 {
-	if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_highlight))) {
-		/* mark matches */
-		webkit_web_view_mark_text_matches(t->view, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
-			gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)), 0);
-		webkit_web_view_set_highlight_text_matches(t->view, TRUE);
-	} else {
-		/* remove highlighting */
-		webkit_web_view_unmark_text_matches(t->view);
-	}
+	/* update text matches */
+	tab_update_search_highlight(t);
+	/* toggle highlighting */
+	webkit_web_view_set_highlight_text_matches(t->view,
+		gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_highlight)));
+}
+
+static void tab_search_case_cb(GtkWidget *widget, Tab *t)
+{
+	/* update text matches */
+	tab_update_search_highlight(t);
 }
 
 /* create new Tab with parent Browser */
@@ -162,8 +152,9 @@ Tab *tab_new(Browser *b, char *title)
 	g_signal_connect_after(G_OBJECT(t->search_entry), "delete-text", G_CALLBACK(tab_search_entry_text_deleted_cb), t);
 	g_signal_connect(G_OBJECT(t->search_previous), "clicked", G_CALLBACK(tab_search_previous_cb), t);
 	g_signal_connect(G_OBJECT(t->search_next), "clicked", G_CALLBACK(tab_search_next_cb), t);
-	g_signal_connect_swapped(G_OBJECT(t->search_hide), "clicked", G_CALLBACK(gtk_widget_hide), t->searchbar);
 	g_signal_connect(G_OBJECT(t->search_highlight), "toggled", G_CALLBACK(tab_search_highlight_cb), t);
+	g_signal_connect(G_OBJECT(t->search_case), "toggled", G_CALLBACK(tab_search_case_cb), t);
+	g_signal_connect_swapped(G_OBJECT(t->search_hide), "clicked", G_CALLBACK(gtk_widget_hide), t->searchbar);
 	
 	/* apply webkit settings */
 	webkit_web_view_set_settings(t->view, b->webkit_settings);
@@ -303,6 +294,19 @@ void tab_update_title(Tab *t)
 
 	/* set tab label */
 	gtk_label_set_text(GTK_LABEL(t->label), (t->title) ? t->title : "");
+}
+
+void tab_update_search_highlight(Tab *t)
+{
+	/* update highlighted matches, if button is set */
+	if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_highlight))) {
+		/* remove previous highlighting */
+		webkit_web_view_unmark_text_matches(t->view);
+		/* highlight new text */
+		webkit_web_view_mark_text_matches(t->view, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
+			gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)), 0);
+		webkit_web_view_set_highlight_text_matches(t->view, TRUE);
+	}
 }
 
 static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t)

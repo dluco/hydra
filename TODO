@@ -11,7 +11,5 @@
 
 - use webkit_settings_set_user_agent_with_application_details
 
-- update highlighted matches as text is entered into search_entry
-
 BUGS
 ----

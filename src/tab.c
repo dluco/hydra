@@ -27,6 +27,32 @@ static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t)
 		gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)));
 }
 
+static void tab_search_entry_text_inserted_cb(GtkEditable *editable, gchar *new_text, gint new_length, gpointer position, Tab *t)
+{
+	/* update highlighted matches, if button is set */
+	if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_highlight))) {
+		/* remove previous highlighting */
+		webkit_web_view_unmark_text_matches(t->view);
+		/* highlight new text */
+		webkit_web_view_mark_text_matches(t->view, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
+			gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)), 0);
+		webkit_web_view_set_highlight_text_matches(t->view, TRUE);
+	}
+}
+
+static void tab_search_entry_text_deleted_cb(GtkEditable *editable, gint start, gint end, Tab *t)
+{
+	/* update highlighted matches, if button is set */
+	if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_highlight))) {
+		/* remove previous highlighting */
+		webkit_web_view_unmark_text_matches(t->view);
+		/* highlight new text */
+		webkit_web_view_mark_text_matches(t->view, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
+			gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)), 0);
+		webkit_web_view_set_highlight_text_matches(t->view, TRUE);
+	}
+}
+
 static void tab_search_previous_cb(GtkWidget *widget, Tab *t)
 {
 	tab_search_reverse(t, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
@@ -132,6 +158,8 @@ Tab *tab_new(Browser *b, char *title)
 	g_signal_connect(G_OBJECT(t->view), "create-web-view", G_CALLBACK(tab_new_requested), t);
 	g_signal_connect(G_OBJECT(t->view), "download-requested", G_CALLBACK(tab_download_cb), t->view);
 	g_signal_connect(G_OBJECT(t->search_entry), "activate", G_CALLBACK(tab_search_entry_activated_cb), t);
+	g_signal_connect_after(G_OBJECT(t->search_entry), "insert-text", G_CALLBACK(tab_search_entry_text_inserted_cb), t);
+	g_signal_connect_after(G_OBJECT(t->search_entry), "delete-text", G_CALLBACK(tab_search_entry_text_deleted_cb), t);
 	g_signal_connect(G_OBJECT(t->search_previous), "clicked", G_CALLBACK(tab_search_previous_cb), t);
 	g_signal_connect(G_OBJECT(t->search_next), "clicked", G_CALLBACK(tab_search_next_cb), t);
 	g_signal_connect_swapped(G_OBJECT(t->search_hide), "clicked", G_CALLBACK(gtk_widget_hide), t->searchbar);

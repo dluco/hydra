@@ -191,8 +191,6 @@ void browser_close_tab(Browser *b, Tab *t)
 	g_free(t);
 
 	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 1) {
-		/* hide notebook tabs when only one tab */
-		gtk_notebook_set_show_tabs(GTK_NOTEBOOK(b->notebook), FALSE);
 		browser_focus_tab_view(b);
 	} else if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 0) { 
 		/* exit if no tabs remaining */

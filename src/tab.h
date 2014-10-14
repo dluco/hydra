@@ -23,7 +23,7 @@ typedef struct _tab {
 
 #define TAB(obj) (Tab *)(obj)
 
-#define TAB_TITLE_MAX 25
+#define TAB_LABEL_WIDTH 100
 #define NEW_TAB_TITLE "New Tab"
 
 #include "browser.h"

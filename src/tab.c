@@ -72,7 +72,8 @@ static void tab_search_case_cb(GtkWidget *widget, Tab *t)
 Tab *tab_new(Browser *b, char *title)
 {
 	Tab *t;
-	GtkWidget *hbox, *ebox, *close_button;
+	GtkWidget *hbox, *ebox, *close_button, *align;
+	GtkToolItem *search_hide;
 	GtkRcStyle *rcstyle;
 	GtkToolItem *tool_item;
 
@@ -99,6 +100,10 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_button_set_relief(GTK_BUTTON(close_button), GTK_RELIEF_NONE);
 	gtk_button_set_focus_on_click(GTK_BUTTON(close_button), FALSE);
 	gtk_container_add(GTK_CONTAINER(close_button), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+	/* pack button in alignment widget - prevents button from
+	   getting larger when it is on the current tab */
+	align = gtk_alignment_new(0.5, 0.5, 0.0, 0.0);
+	gtk_container_add(GTK_CONTAINER(align), close_button);
 	/* make button as small as possible */
 	rcstyle = gtk_rc_style_new();
 	rcstyle->xthickness = rcstyle->ythickness = 0;
@@ -106,7 +111,7 @@ Tab *tab_new(Browser *b, char *title)
 	/* pack and show all */
 	gtk_box_pack_start(GTK_BOX(hbox), t->spinner, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), t->label, TRUE, TRUE, 6);
-	gtk_box_pack_start(GTK_BOX(hbox), close_button, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), align, FALSE, FALSE, 0);
 	gtk_widget_show_all(ebox);
 	/* hide spinner initially */
 	gtk_widget_hide(t->spinner);
@@ -155,12 +160,13 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_tool_item_set_expand(tool_item, TRUE);
 	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(tool_item), -1);
 	/* searchbar hide button */
-	t->search_hide = gtk_tool_button_new_from_stock(GTK_STOCK_CLOSE);
-	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(t->search_hide), -1);
+	search_hide = gtk_tool_button_new_from_stock(GTK_STOCK_CLOSE);
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(search_hide), -1);
 
 	gtk_box_pack_start(GTK_BOX(t->vbox), t->searchbar, FALSE, FALSE, 0);
 
 	/*callbacks*/
+	g_signal_connect_swapped(G_OBJECT(close_button), "clicked", G_CALLBACK(tab_close), t);
 	g_signal_connect(G_OBJECT(t->view), "notify::title", G_CALLBACK(tab_title_changed), t);
 	g_signal_connect(G_OBJECT(t->view), "notify::load-status", G_CALLBACK(tab_load_status_changed), t);
 	g_signal_connect(G_OBJECT(t->view), "notify::progress", G_CALLBACK(tab_progress_changed_cb), t);
@@ -174,7 +180,7 @@ Tab *tab_new(Browser *b, char *title)
 	g_signal_connect(G_OBJECT(t->search_next), "clicked", G_CALLBACK(tab_search_next_cb), t);
 	g_signal_connect(G_OBJECT(t->search_highlight), "toggled", G_CALLBACK(tab_search_highlight_cb), t);
 	g_signal_connect(G_OBJECT(t->search_case), "toggled", G_CALLBACK(tab_search_case_cb), t);
-	g_signal_connect_swapped(G_OBJECT(t->search_hide), "clicked", G_CALLBACK(gtk_widget_hide), t->searchbar);
+	g_signal_connect_swapped(G_OBJECT(search_hide), "clicked", G_CALLBACK(gtk_widget_hide), t->searchbar);
 	
 	/* apply webkit settings */
 	webkit_web_view_set_settings(t->view, b->webkit_settings);
@@ -209,6 +215,21 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_widget_grab_focus(b->uri_entry);
 
 	return t;
+}
+
+/* close tab, and quit if there are no tabs */
+void tab_close(Tab *t)
+{
+	Browser *b = BROWSER(t->parent);
+	gtk_notebook_remove_page(GTK_NOTEBOOK(b->notebook), browser_get_tab_num(b, t));
+	g_free(t);
+
+	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 1) {
+		browser_focus_tab_view(b);
+	} else if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 0) { 
+		/* exit if no tabs remaining */
+		gtk_main_quit(); 
+	}
 }
 
 /* check for protocol and load uri */

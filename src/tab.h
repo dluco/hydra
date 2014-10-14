@@ -15,7 +15,6 @@ typedef struct _tab {
 	GtkToolItem *search_next; 
 	GtkToolItem *search_highlight;
 	GtkToolItem *search_case;
-	GtkToolItem *search_hide; 
 	gchar *title;				/* title of current page */
 	double progress; 				/* progress of page being loaded */
 	guint status_context_id;	/* statusbar id */
@@ -29,6 +28,7 @@ typedef struct _tab {
 #include "browser.h"
 
 Tab *tab_new(Browser *b, char *title);
+void tab_close(Tab *t);
 void tab_load_uri(Tab *t, gchar *uri);
 void tab_forward(Tab *t);
 void tab_back(Tab *t);

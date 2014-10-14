@@ -70,7 +70,7 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 			gtk_widget_grab_focus(b->uri_entry);
 			return TRUE;
 		case GDK_KEY_w:
-			browser_close_tab(b, t);
+			tab_close(t);
 			return TRUE;
 		case GDK_KEY_q:
 			browser_close(b);
@@ -166,7 +166,7 @@ Tab *browser_get_current_tab(Browser *b)
 /* get the tab number containing the tab specified */
 int browser_get_tab_num(Browser *b, Tab *t)
 {
-	return gtk_notebook_page_num(GTK_NOTEBOOK(b->notebook), t->scroll);
+	return gtk_notebook_page_num(GTK_NOTEBOOK(b->notebook), t->vbox);
 }
 
 int browser_get_current_tab_num(Browser *b)
@@ -180,21 +180,7 @@ void browser_close(Browser *b)
 	int n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook));
 
 	for (i = 0; i < n; i++) {
-		browser_close_tab(b, browser_get_current_tab(b));
-	}
-}
-
-/* close tab, and quit if there are no tabs */
-void browser_close_tab(Browser *b, Tab *t)
-{
-	gtk_notebook_remove_page(GTK_NOTEBOOK(b->notebook), gtk_notebook_get_current_page(GTK_NOTEBOOK(b->notebook)));
-	g_free(t);
-
-	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 1) {
-		browser_focus_tab_view(b);
-	} else if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 0) { 
-		/* exit if no tabs remaining */
-		gtk_main_quit(); 
+		tab_close(browser_get_current_tab(b));
 	}
 }
 

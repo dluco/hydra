@@ -87,7 +87,7 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 		case GDK_KEY_e:
 			tab_reload(t, TRUE);
 			return TRUE;
-		case GDK_KEY_s:
+		case GDK_KEY_u: // Ctrl+u : View Page Source
 			tab_view_source(t);
 			return TRUE;
 		case GDK_KEY_Return:
@@ -98,10 +98,12 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 		}
 	}
 
-	/* Esc : change focus to webview, hide searchbar if currently focused */
+	/* Esc : change focus to webview, hide searchbar if currently focused, or stop loading page */
 	if (g == GDK_KEY_Escape) {
 		if (gtk_widget_has_focus(t->search_entry)) {
 			gtk_widget_hide(t->searchbar);
+		} else if (gtk_widget_has_focus(GTK_WIDGET(t->view))) {
+			tab_stop_loading(t);
 		}
 		browser_focus_tab_view(b);
 	}

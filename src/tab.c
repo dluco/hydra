@@ -68,10 +68,20 @@ static void tab_search_case_cb(GtkWidget *widget, Tab *t)
 	tab_update_search_highlight(t);
 }
 
+static void tab_close_button_style_set(GtkWidget *widget, GtkRcStyle *prev_style, gpointer data)
+{
+	int w, h;
+	gtk_icon_size_lookup_for_settings(gtk_widget_get_settings(widget), GTK_ICON_SIZE_MENU, &w, &h);
+	gtk_widget_set_size_request(widget, w + 5, h + 5);
+	//gtk_widget_set_size_request(widget, w + 2, h + 2);
+//	gtk_widget_set_size_request(widget, w, h);
+}
+
 /* create new Tab with parent Browser */
 Tab *tab_new(Browser *b, char *title)
 {
 	Tab *t;
+	GtkWidget *hbox, *ebox, *close_button, *image, *align;
 	GtkToolItem *tool_item;
 
 	t = g_new0(Tab, 1);
@@ -80,16 +90,36 @@ Tab *tab_new(Browser *b, char *title)
 	t->vbox = gtk_vbox_new(FALSE, 0);
 
 	/* notebook label */
-	t->hbox = gtk_hbox_new(FALSE, 0);
+	ebox = gtk_event_box_new();
+	gtk_widget_set_has_window(ebox, FALSE);
+	//g_signal_connect(G_OBJECT(ebox), "button-press-event", G_CALLBACK(tab_label_click_cb), t);
+	/* focus on t->view after clicking on tab label */
+	//g_signal_connect_after(G_OBJECT(ebox), "button-release-event", G_CALLBACK(#focus_view), t);
+	//hbox = gtk_hbox_new(FALSE, 0);
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_container_add(GTK_CONTAINER(ebox), hbox);
+	/* tab spinner */
 	t->spinner = gtk_spinner_new();
+	gtk_box_pack_start(GTK_BOX(hbox), t->spinner, FALSE, FALSE, 0);
+	/* tab label */
 	t->label = gtk_label_new(title);
 	gtk_label_set_max_width_chars(GTK_LABEL(t->label), TAB_TITLE_MAX);
 	gtk_label_set_ellipsize(GTK_LABEL(t->label), PANGO_ELLIPSIZE_END);
-	gtk_box_pack_start(GTK_BOX(t->hbox), t->spinner, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(t->hbox), t->label, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), t->label, FALSE, FALSE, 0);
+	/* tab close button */
+	close_button = gtk_button_new();
+	gtk_button_set_relief(GTK_BUTTON(close_button), GTK_RELIEF_NONE);
+	gtk_button_set_focus_on_click(GTK_BUTTON(close_button), FALSE);
+	image = gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU);
+	gtk_container_add(GTK_CONTAINER(close_button), image);
+	align = gtk_alignment_new(0.5, 0.5, 0.0, 0.0);
+	gtk_container_add(GTK_CONTAINER(align), close_button);
+	gtk_box_pack_start(GTK_BOX(hbox), align, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(close_button), "style-set", G_CALLBACK(tab_close_button_style_set), NULL);
 	/* hide spinner initially */
-	gtk_widget_show_all(t->hbox);
+	gtk_widget_show_all(ebox);
 	gtk_widget_hide(t->spinner);
+//	gtk_widget_hide(close_button);
 
 	/* scrolled webview */
 	t->scroll = gtk_scrolled_window_new(NULL, NULL);
@@ -166,10 +196,10 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(t->scroll), GTK_SHADOW_NONE);
 
 	/* add to notebook */
-	int index = gtk_notebook_append_page(GTK_NOTEBOOK(b->notebook), t->vbox, t->hbox);
+	int index = gtk_notebook_append_page(GTK_NOTEBOOK(b->notebook), t->vbox, ebox);
 	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(b->notebook), t->vbox, TRUE);
 	/* hide tabs if only one */
-	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(b->notebook), (index > 0));
+//	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(b->notebook), (index > 0));
 
 	/* setup widgets, automatically focus the addressbar */
 	g_object_set_qdata(G_OBJECT(gtk_notebook_get_nth_page(GTK_NOTEBOOK(b->notebook), index)), b->term_data_id, t);
@@ -186,7 +216,7 @@ Tab *tab_new(Browser *b, char *title)
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), index); 
 	}
 	*/
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), index); 
+//	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), index); 
 
 	gtk_widget_grab_focus(b->uri_entry);
 
@@ -224,6 +254,11 @@ void tab_reload(Tab *t, gboolean bypass_cache)
 	} else {
 		webkit_web_view_reload_bypass_cache(t->view);
 	}
+}
+
+void tab_stop_loading(Tab *t)
+{
+	webkit_web_view_stop_loading(t->view);
 }
 
 void tab_home(Tab *t)

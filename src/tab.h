@@ -6,7 +6,6 @@ typedef struct _tab {
 	GtkWidget *vbox;			/* vbox */
 	GtkWidget *scroll;			/* scrolled window - child of vbox */
 	WebKitWebView *view;		/* webview - child of scrolled window */
-	GtkWidget *hbox;			/* notebook label container */
 	GtkWidget *label;			/* notebook text label */
 	GtkWidget *spinner;			/* progress indicator */
 	GtkWidget *searchbar; 
@@ -34,6 +33,7 @@ void tab_load_uri(Tab *t, gchar *uri);
 void tab_forward(Tab *t);
 void tab_back(Tab *t);
 void tab_reload(Tab *t, gboolean bypass);
+void tab_stop_loading(Tab *t);
 void tab_home(Tab *t);
 void tab_zoom(Tab *t, gboolean in);
 void tab_zoom_reset(Tab *t);

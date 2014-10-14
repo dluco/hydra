@@ -14,6 +14,7 @@ typedef struct _tab {
 	GtkWidget *search_entry; 
 	GtkToolItem *search_previous; 
 	GtkToolItem *search_next; 
+	GtkToolItem *search_highlight;
 	GtkToolItem *search_case;
 	GtkToolItem *search_hide; 
 	gchar *title;				/* title of current page */

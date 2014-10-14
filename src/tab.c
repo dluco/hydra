@@ -12,6 +12,7 @@
 static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t);
 static void tab_search_previous_cb(GtkWidget *widget, Tab *t);
 static void tab_search_next_cb(GtkWidget *widget, Tab *t);
+static void tab_search_highlight_cb(GtkWidget *widget, Tab *t);
 static WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab *t);
 static void tab_download_cb(WebKitWebView *web_view, GObject *d, gpointer user_data);
 static void tab_title_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t);
@@ -36,6 +37,19 @@ static void tab_search_next_cb(GtkWidget *widget, Tab *t)
 {
 	tab_search_forward(t, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
 		gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)));
+}
+
+static void tab_search_highlight_cb(GtkWidget *widget, Tab *t)
+{
+	if (gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_highlight))) {
+		/* mark matches */
+		webkit_web_view_mark_text_matches(t->view, gtk_entry_get_text(GTK_ENTRY(t->search_entry)),
+			gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)), 0);
+		webkit_web_view_set_highlight_text_matches(t->view, TRUE);
+	} else {
+		/* remove highlighting */
+		webkit_web_view_unmark_text_matches(t->view);
+	}
 }
 
 /* create new Tab with parent Browser */
@@ -92,6 +106,10 @@ Tab *tab_new(Browser *b, char *title)
 	/* search next button */
 	t->search_next = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
 	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(t->search_next), -1);
+	/* toggle highlight all matches button */
+	t->search_highlight = gtk_toggle_tool_button_new();
+	gtk_tool_button_set_label(GTK_TOOL_BUTTON(t->search_highlight), "Highlight All");
+	gtk_toolbar_insert(GTK_TOOLBAR(t->searchbar), GTK_TOOL_ITEM(t->search_highlight), -1);
 	/* toggle search case sensitivity button */
 	t->search_case = gtk_toggle_tool_button_new();
 	gtk_tool_button_set_label(GTK_TOOL_BUTTON(t->search_case), "Match Case");
@@ -117,6 +135,7 @@ Tab *tab_new(Browser *b, char *title)
 	g_signal_connect(G_OBJECT(t->search_previous), "clicked", G_CALLBACK(tab_search_previous_cb), t);
 	g_signal_connect(G_OBJECT(t->search_next), "clicked", G_CALLBACK(tab_search_next_cb), t);
 	g_signal_connect_swapped(G_OBJECT(t->search_hide), "clicked", G_CALLBACK(gtk_widget_hide), t->searchbar);
+	g_signal_connect(G_OBJECT(t->search_highlight), "toggled", G_CALLBACK(tab_search_highlight_cb), t);
 	
 	/* apply webkit settings */
 	webkit_web_view_set_settings(t->view, b->webkit_settings);

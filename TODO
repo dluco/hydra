@@ -1,6 +1,5 @@
 - add advanced cookie support
 - add config file support
-- close button on tabs
 - use $WWW_HOME for homepage setting (also use config file as backup? or override WWW_HOME?)
 - store a Browser's Tabs in an array/list:
 	- get_current_tab: get vbox from notebook and search list for (t->vbox == vbox)
@@ -10,6 +9,8 @@
 	- use webkit favicon database?
 
 - use webkit_settings_set_user_agent_with_application_details
+
+- new tab notebook button
 
 BUGS
 ----

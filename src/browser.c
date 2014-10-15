@@ -67,8 +67,7 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 			browser_switch_tab(b, TRUE);
 			return TRUE;
 		case GDK_KEY_t:
-			tab_new(b, "New Tab");
-			gtk_widget_grab_focus(b->uri_entry);
+			browser_new_tab(b);
 			return TRUE;
 		case GDK_KEY_w:
 			tab_close(t);
@@ -139,9 +138,8 @@ static void browser_tab_switched_cb(GtkNotebook *notebook, GtkWidget *page, guin
 
 static void browser_new_tab_cb(GtkWidget *widget, Browser *b)
 {
-	/* create new tab and change focus to tab */
-	Tab *t = tab_new(b, "New Tab");
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), browser_get_tab_num(b, t));
+	/* create new tab */
+	browser_new_tab(b);
 }
 
 /* uri-bar callback */
@@ -180,6 +178,13 @@ int browser_get_tab_num(Browser *b, Tab *t)
 int browser_get_current_tab_num(Browser *b)
 {
 	return browser_get_tab_num(b, browser_get_current_tab(b));
+}
+
+void browser_new_tab(Browser *b)
+{
+	/* create new tab, change focus to tab, and focus uri-bar */
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), browser_get_tab_num(b, tab_new(b, "New Tab")));
+	gtk_widget_grab_focus(b->uri_entry);
 }
 
 void browser_close(Browser *b)

@@ -30,6 +30,7 @@ Tab *browser_get_tab(Browser *b, int tab_num);
 Tab *browser_get_current_tab(Browser *b);
 int browser_get_tab_num(Browser *b, Tab *t);
 int browser_get_current_tab_num(Browser *b);
+void browser_new_tab(Browser *b);
 void browser_close(Browser *b);
 void browser_switch_tab(Browser *b, gboolean forward);
 void browser_history(Browser *b);

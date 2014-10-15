@@ -34,4 +34,4 @@ uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/hydra
 
-.PHONY: all clean strip dist install uninstall
+.PHONY: all hydra clean strip dist install uninstall

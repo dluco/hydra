@@ -213,7 +213,7 @@ Tab *tab_new(Browser *b, char *title)
 	*/
 //	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), index); 
 
-	gtk_widget_grab_focus(b->uri_entry);
+//	gtk_widget_grab_focus(b->uri_entry);
 
 	return t;
 }

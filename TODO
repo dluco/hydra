@@ -11,6 +11,8 @@
 - use webkit_settings_set_user_agent_with_application_details
 
 - new tab notebook button
+	- use GTK_STOCK_ADD
+	- figure out how to get in notebook label-bar
 
 BUGS
 ----

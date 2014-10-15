@@ -13,6 +13,7 @@
 
 static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event, Browser *b);
 static void browser_tab_switched_cb(GtkNotebook *notebook, GtkWidget *page, guint page_num, Browser *b);
+static void browser_new_tab_cb(GtkWidget *widget, Browser *b);
 static void browser_uri_entry_activated_cb(GtkWidget *entry, Browser *b);
 
 static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event, Browser *b)
@@ -134,6 +135,13 @@ static void browser_tab_switched_cb(GtkNotebook *notebook, GtkWidget *page, guin
 	/* update toolbar buttons */
 	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
 	gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), webkit_web_view_can_go_forward(t->view));
+}
+
+static void browser_new_tab_cb(GtkWidget *widget, Browser *b)
+{
+	/* create new tab and change focus to tab */
+	Tab *t = tab_new(b, "New Tab");
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), browser_get_tab_num(b, t));
 }
 
 /* uri-bar callback */
@@ -280,6 +288,7 @@ Browser *browser_new(void)
 	Browser *b;
 	Tab *t;
 	GtkToolItem *tool_item;
+	GtkWidget *new_tab_button, *align;
 	
 	b = g_new0(Browser, 1);
 	
@@ -306,6 +315,19 @@ Browser *browser_new(void)
 	gtk_container_add(GTK_CONTAINER(tool_item), b->uri_entry);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(tool_item), -1);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->home_button), -1);
+
+	/* notebook "new tab" button */
+	new_tab_button = gtk_button_new();
+	gtk_button_set_relief(GTK_BUTTON(new_tab_button), GTK_RELIEF_NONE);
+	gtk_button_set_focus_on_click(GTK_BUTTON(new_tab_button), FALSE);
+	gtk_container_add(GTK_CONTAINER(new_tab_button),
+		gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
+	/* pack button in alignment widget */
+	align = gtk_alignment_new(0.5, 0.5, 0.0, 0.0);
+	gtk_container_add(GTK_CONTAINER(align), new_tab_button);
+	/* pack and show button */
+	gtk_notebook_set_action_widget(GTK_NOTEBOOK(b->notebook), align, GTK_PACK_START);
+	gtk_widget_show_all(align);
 
 	/* statusbar */
 	b->statusbar = gtk_statusbar_new();
@@ -348,6 +370,7 @@ Browser *browser_new(void)
 	g_signal_connect(G_OBJECT(b->uri_entry), "activate", G_CALLBACK(browser_uri_entry_activated_cb), b);
 	g_signal_connect_swapped(G_OBJECT(b->home_button), "clicked", G_CALLBACK(browser_go_home), b);
 	g_signal_connect(G_OBJECT(b->notebook), "switch-page", G_CALLBACK(browser_tab_switched_cb), b);
+	g_signal_connect(G_OBJECT(new_tab_button), "clicked", G_CALLBACK(browser_new_tab_cb), b);
 	g_signal_connect_swapped(G_OBJECT(b->window), "destroy", G_CALLBACK(browser_close), b);
 	g_signal_connect(G_OBJECT(b->window), "key-press-event", G_CALLBACK(browser_key_press_event_cb), b);
 

@@ -99,7 +99,8 @@ Tab *tab_new(Browser *b, char *title)
 	close_button = gtk_button_new();
 	gtk_button_set_relief(GTK_BUTTON(close_button), GTK_RELIEF_NONE);
 	gtk_button_set_focus_on_click(GTK_BUTTON(close_button), FALSE);
-	gtk_container_add(GTK_CONTAINER(close_button), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+	gtk_container_add(GTK_CONTAINER(close_button),
+		gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
 	/* pack button in alignment widget - prevents button from
 	   getting larger when it is on the current tab */
 	align = gtk_alignment_new(0.5, 0.5, 0.0, 0.0);

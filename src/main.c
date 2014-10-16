@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include "browser.h"
@@ -24,6 +25,11 @@ int main(int argc, char *argv[])
 	/* initialize GTK and parse commandline options */
 	if (!gtk_init_with_args(&argc, &argv, "[addresses]", entries, NULL, &error)) {
 		die("%s\n", error->message);
+	}
+
+	if (version) {
+		printf("hydra %s, 2014 David Luco\n", VERSION);
+		exit(EXIT_SUCCESS);
 	}
 
 	/* create first browser */

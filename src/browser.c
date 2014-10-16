@@ -36,9 +36,6 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 
 	if ((event->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK ) {
 		switch(g) {
-		case GDK_KEY_l:
-			browser_show_uri_entry(b);
-			return TRUE;
 		case GDK_KEY_f:
 			tab_show_search_entry(t);
 			return TRUE;
@@ -75,19 +72,19 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 		case GDK_KEY_q:
 			browser_close(b);
 			return TRUE;
-		case GDK_KEY_bracketright:
+		case GDK_KEY_bracketright: // FIXME: use Ctrl++
 			tab_zoom(t, TRUE);
 			return TRUE;
-		case GDK_KEY_bracketleft:
+		case GDK_KEY_bracketleft: // FIXME: use Ctrl+-
 			tab_zoom(t, FALSE);
 			return TRUE;
-		case GDK_KEY_r:
+		case GDK_KEY_r: /* Ctrl+r : Reload page */
 			tab_reload(t, FALSE);
 			return TRUE;
-		case GDK_KEY_e:
+		case GDK_KEY_e: /* Ctrl+e : Reload page (bypass cache) */
 			tab_reload(t, TRUE);
 			return TRUE;
-		case GDK_KEY_u: // Ctrl+u : View Page Source
+		case GDK_KEY_u: /* Ctrl+u : View Page Source */
 			tab_view_source(t);
 			return TRUE;
 		case GDK_KEY_Return:
@@ -247,15 +244,6 @@ void browser_go_home(Browser *b)
 	tab_home(browser_get_current_tab(b));
 }
 
-void browser_show_uri_entry(Browser *b)
-{
-	if (!gtk_widget_get_visible(b->uri_entry)) {
-		gtk_widget_show(b->uri_entry);
-	}
- 
-	gtk_widget_grab_focus(GTK_WIDGET(b->uri_entry));
-}
-
 /* call the history command. should we do it ASYNC?*/
 void browser_history(Browser *b)
 {
@@ -293,7 +281,8 @@ Browser *browser_new(void)
 	Browser *b;
 	Tab *t;
 	GtkToolItem *tool_item;
-	GtkWidget *new_tab_button, *align;
+	GtkWidget *align;
+	GtkRcStyle *rcstyle;
 	
 	b = g_new0(Browser, 1);
 	
@@ -322,14 +311,15 @@ Browser *browser_new(void)
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->home_button), -1);
 
 	/* notebook "new tab" button */
-	new_tab_button = gtk_button_new();
-	gtk_button_set_relief(GTK_BUTTON(new_tab_button), GTK_RELIEF_NONE);
-	gtk_button_set_focus_on_click(GTK_BUTTON(new_tab_button), FALSE);
-	gtk_container_add(GTK_CONTAINER(new_tab_button),
+	b->new_tab_button = gtk_button_new();
+	gtk_button_set_relief(GTK_BUTTON(b->new_tab_button), GTK_RELIEF_NONE);
+	gtk_button_set_focus_on_click(GTK_BUTTON(b->new_tab_button), FALSE);
+	gtk_container_add(GTK_CONTAINER(b->new_tab_button),
 		gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
-	/* pack button in alignment widget */
+	/* pack button in alignment widget and remove padding */
 	align = gtk_alignment_new(0.5, 0.5, 0.0, 0.0);
-	gtk_container_add(GTK_CONTAINER(align), new_tab_button);
+	gtk_alignment_set_padding(GTK_ALIGNMENT(align), 0, 0, 0, 0);
+	gtk_container_add(GTK_CONTAINER(align), b->new_tab_button);
 	/* pack and show button */
 	gtk_notebook_set_action_widget(GTK_NOTEBOOK(b->notebook), align, GTK_PACK_START);
 	gtk_widget_show_all(align);
@@ -349,6 +339,9 @@ Browser *browser_new(void)
 
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(b->notebook), TRUE);
 	gtk_notebook_set_show_border(GTK_NOTEBOOK(b->notebook), FALSE);
+	rcstyle = gtk_rc_style_new();
+	rcstyle->xthickness = rcstyle->ythickness = 1;
+	gtk_widget_modify_style(b->notebook, rcstyle);
 
 	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), FALSE);
 	gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), FALSE);
@@ -375,7 +368,7 @@ Browser *browser_new(void)
 	g_signal_connect(G_OBJECT(b->uri_entry), "activate", G_CALLBACK(browser_uri_entry_activated_cb), b);
 	g_signal_connect_swapped(G_OBJECT(b->home_button), "clicked", G_CALLBACK(browser_go_home), b);
 	g_signal_connect(G_OBJECT(b->notebook), "switch-page", G_CALLBACK(browser_tab_switched_cb), b);
-	g_signal_connect(G_OBJECT(new_tab_button), "clicked", G_CALLBACK(browser_new_tab_cb), b);
+	g_signal_connect(G_OBJECT(b->new_tab_button), "clicked", G_CALLBACK(browser_new_tab_cb), b);
 	g_signal_connect_swapped(G_OBJECT(b->window), "destroy", G_CALLBACK(browser_close), b);
 	g_signal_connect(G_OBJECT(b->window), "key-press-event", G_CALLBACK(browser_key_press_event_cb), b);
 

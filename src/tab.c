@@ -22,6 +22,16 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 static void tab_progress_changed_cb(WebKitWebView *view, GParamSpec *pspec, Tab *t);
 static void tab_search(Tab *t, const char *str, gboolean forward, gboolean case_sensitive);
 
+/*
+static void tab_close_button_style_set_cb(GtkWidget *button, GtkRcStyle *prev_style, gpointer data)
+{
+	int w, h;
+
+	gtk_icon_size_lookup_for_settings(gtk_widget_get_settings(button), GTK_ICON_SIZE_MENU, &w, &h);
+	gtk_widget_set_size_request(button, w, h);
+}
+*/
+
 /* search-entry callback */
 static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t)
 {
@@ -93,8 +103,9 @@ Tab *tab_new(Browser *b, char *title)
 	t->label = gtk_label_new(title);
 	gtk_widget_set_size_request(t->label, TAB_LABEL_WIDTH, -1);
 	gtk_label_set_ellipsize(GTK_LABEL(t->label), PANGO_ELLIPSIZE_END);
-	/* align label to left */
+	/* align label to left and remove padding */
 	gtk_misc_set_alignment(GTK_MISC(t->label), 0.0, 0.5);
+	gtk_misc_set_padding(GTK_MISC(t->label), 0, 0);
 	/* tab close button */
 	close_button = gtk_button_new();
 	gtk_button_set_relief(GTK_BUTTON(close_button), GTK_RELIEF_NONE);
@@ -104,14 +115,17 @@ Tab *tab_new(Browser *b, char *title)
 	/* pack button in alignment widget - prevents button from
 	   getting larger when it is on the current tab */
 	align = gtk_alignment_new(0.5, 0.5, 0.0, 0.0);
+	gtk_alignment_set_padding(GTK_ALIGNMENT(align), 0, 0, 0, 0);
 	gtk_container_add(GTK_CONTAINER(align), close_button);
 	/* make button as small as possible */
 	rcstyle = gtk_rc_style_new();
 	rcstyle->xthickness = rcstyle->ythickness = 0;
 	gtk_widget_modify_style(close_button, rcstyle);
+	/* connect to style changes to keep button **really** small */
+	//g_signal_connect(G_OBJECT(close_button), "style-set", G_CALLBACK(tab_close_button_style_set_cb), NULL);
 	/* pack and show all */
 	gtk_box_pack_start(GTK_BOX(hbox), t->spinner, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), t->label, TRUE, TRUE, 6);
+	gtk_box_pack_start(GTK_BOX(hbox), t->label, TRUE, TRUE, 4);
 	gtk_box_pack_start(GTK_BOX(hbox), align, FALSE, FALSE, 0);
 	gtk_widget_show_all(ebox);
 	/* hide spinner initially */

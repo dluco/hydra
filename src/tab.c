@@ -2,10 +2,11 @@
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include <glib/gprintf.h>
-#include "browser.h"
-#include "tab.h"
-#include "utils.h"
+#include "hydra.h"
 #include "config.h"
+#include "tab.h"
+#include "browser.h"
+#include "utils.h"
 
 #define DOWNLOAD_LOCATION g_get_home_dir()
 
@@ -39,13 +40,13 @@ static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t)
 		gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(t->search_case)));
 }
 
-static void tab_search_entry_text_inserted_cb(GtkEditable *editable, gchar *new_text, gint new_length, gpointer position, Tab *t)
+static void tab_search_entry_text_inserted_cb(GtkEditable *editable, char *new_text, int new_length, gpointer position, Tab *t)
 {
 	/* update text matches */
 	tab_update_search_highlight(t);
 }
 
-static void tab_search_entry_text_deleted_cb(GtkEditable *editable, gint start, gint end, Tab *t)
+static void tab_search_entry_text_deleted_cb(GtkEditable *editable, int start, int end, Tab *t)
 {
 	/* update text matches */
 	tab_update_search_highlight(t);
@@ -235,7 +236,7 @@ Tab *tab_new(Browser *b, char *title)
 /* close tab, and quit if there are no tabs */
 void tab_close(Tab *t)
 {
-	Browser *b = BROWSER(t->parent);
+	Browser *b = t->parent;
 	gtk_notebook_remove_page(GTK_NOTEBOOK(b->notebook), browser_get_tab_num(b, t));
 	g_free(t);
 
@@ -248,9 +249,9 @@ void tab_close(Tab *t)
 }
 
 /* check for protocol and load uri */
-void tab_load_uri(Tab *t, gchar *uri)
+void tab_load_uri(Tab *t, char *uri)
 {
-	gchar *uri_real;
+	char *uri_real;
 
 	uri_real = g_strrstr(uri, "://") ? g_strdup(uri) : g_strdup_printf("http://%s", uri);
 	webkit_web_view_load_uri(t->view, uri_real);
@@ -313,7 +314,7 @@ void tab_zoom_reset(Tab *t)
 /* when a new tab is requested, return the t->view */
 static WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab *t)
 {
-	Browser *b = BROWSER(t->parent);
+	Browser *b = t->parent;
 	Tab *t_new = tab_new(b, "Loading...");
 	gtk_widget_grab_focus(GTK_WIDGET(t_new->view));
 	return t_new->view;
@@ -322,12 +323,12 @@ static WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab
 /* download callback */
 static void tab_download_cb(WebKitWebView *web_view, GObject *d, gpointer user_data)
 {
-	gchar *command;
+	char *command;
 
-	const gchar *download_url = webkit_download_get_uri(WEBKIT_DOWNLOAD(d));
-	const gchar *requested_name = webkit_download_get_suggested_filename(WEBKIT_DOWNLOAD(d));
+	const char *download_url = webkit_download_get_uri(WEBKIT_DOWNLOAD(d));
+	const char *requested_name = webkit_download_get_suggested_filename(WEBKIT_DOWNLOAD(d));
 
-	command = g_new0(gchar, strlen(DOWNLOAD_COMMAND) + strlen(DOWNLOAD_LOCATION) + strlen(requested_name) + strlen(download_url) + 1);
+	command = g_new0(char, strlen(DOWNLOAD_COMMAND) + strlen(DOWNLOAD_LOCATION) + strlen(requested_name) + strlen(download_url) + 1);
 	g_sprintf(command, DOWNLOAD_COMMAND, DOWNLOAD_LOCATION, requested_name, download_url);
 	g_spawn_command_line_async(command, NULL);
 
@@ -337,7 +338,7 @@ static void tab_download_cb(WebKitWebView *web_view, GObject *d, gpointer user_d
 /* title change callback */
 static void tab_title_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t)
 {
-	const gchar *title = webkit_web_view_get_title(view);;
+	const char *title = webkit_web_view_get_title(view);;
 
 	if (title) {
 		t->title = str_copy(&t->title, title);
@@ -347,7 +348,7 @@ static void tab_title_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t)
 
 void tab_update_title(Tab *t)
 {
-	Browser *b = BROWSER(t->parent);
+	Browser *b = t->parent;
 
 	/* update window title if this is the current tab */
 	if (browser_get_current_tab_num(b) == browser_get_tab_num(b, t)) {
@@ -374,8 +375,8 @@ void tab_update_search_highlight(Tab *t)
 
 static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t)
 {
-	Browser *b = BROWSER(t->parent);
-	const gchar *uri;
+	Browser *b = t->parent;
+	const char *uri;
 	
 	switch(webkit_web_view_get_load_status(t->view)) {
 	case WEBKIT_LOAD_PROVISIONAL:

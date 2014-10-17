@@ -1,32 +1,6 @@
 #ifndef _TAB_H_
 #define _TAB_H_
 
-typedef struct _tab { 
-	gpointer parent;			/* back pointer to parent Browser */
-	GtkWidget *vbox;			/* vbox */
-	GtkWidget *scroll;			/* scrolled window - child of vbox */
-	WebKitWebView *view;		/* webview - child of scrolled window */
-	GtkWidget *label;			/* notebook text label */
-	GtkWidget *spinner;			/* progress indicator */
-	GtkWidget *searchbar; 
-	GtkWidget *search_label; 
-	GtkWidget *search_entry; 
-	GtkToolItem *search_previous; 
-	GtkToolItem *search_next; 
-	GtkToolItem *search_highlight;
-	GtkToolItem *search_case;
-	gchar *title;				/* title of current page */
-	double progress; 				/* progress of page being loaded */
-	guint status_context_id;	/* statusbar id */
-} Tab;
-
-#define TAB(obj) (Tab *)(obj)
-
-#define TAB_LABEL_WIDTH 100
-#define NEW_TAB_TITLE "New Tab"
-
-#include "browser.h"
-
 Tab *tab_new(Browser *b, char *title);
 void tab_close(Tab *t);
 void tab_load_uri(Tab *t, gchar *uri);

@@ -1,30 +1,6 @@
 #ifndef _BROWSER_H_
 #define _BROWSER_H_
 
-typedef struct _Browser {	
-	WebKitWebSettings *webkit_settings;
-	SoupSession *session;
-	SoupCookieJar *jar;
-	GtkWidget *window;
-	GtkWidget *vbox;
-	GtkWidget *uri_entry;	
-	GtkWidget *toolbar;
-	GtkToolItem *back_button, *forward_button, *refresh_button, *stop_button, *home_button;
-	GtkWidget *notebook; 
-	GtkWidget *new_tab_button;
-	GtkWidget *statusbar;
-	GQuark term_data_id;
-	gchar *title;
-	int status_context_id;
-	gboolean hide;
-} Browser;
-
-#include "tab.h"
-
-#define BROWSER(obj) (Browser *)(obj)
-
-#define DEFAULT_BROWSER_TITLE "Hydra"
-
 void browser_link_hover_cb(WebKitWebView *page, const gchar *title, const gchar *link, Browser *b);
 Tab *browser_get_tab(Browser *b, int tab_num);
 Tab *browser_get_current_tab(Browser *b);

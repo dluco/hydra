@@ -5,6 +5,7 @@
 	- get_current_tab: get vbox from notebook and search list for (t->vbox == vbox)
 	- use get_tab_num as base for other functions
 	- USE: "g_list"
+- use int for progress
 
 - favicon support
 	- use webkit favicon database?

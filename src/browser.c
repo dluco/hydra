@@ -6,6 +6,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <webkit/webkit.h>
 #include <glib/gstdio.h>
+#include "hydra.h"
 #include "config.h"
 #include "browser.h"
 #include "tab.h"
@@ -153,7 +154,7 @@ static void browser_uri_entry_activated_cb(GtkWidget *entry, Browser *b)
 }
 
 /* link hovering callback */
-void browser_link_hover_cb(WebKitWebView *page, const gchar *title, const gchar *link, Browser *b)
+void browser_link_hover_cb(WebKitWebView *page, const char *title, const char *link, Browser *b)
 {
 	gtk_statusbar_pop(GTK_STATUSBAR(b->statusbar), b->status_context_id); 
 	if (link) {
@@ -214,7 +215,7 @@ void browser_switch_tab(Browser *b, gboolean forward)
 /* an alternative to the regular tab command, combines tabbing and history command into one */
 void tab_and_go(Browser *b)
 {
-	gchar *returned;
+	char *returned;
 
 	g_spawn_command_line_sync(g_strconcat("sh -c 'sort ",
 		g_build_filename(g_get_home_dir(), DEFAULT_HISTORY_FILE, NULL),	
@@ -257,9 +258,9 @@ void browser_go_home(Browser *b)
 /* call the history command. should we do it ASYNC?*/
 void browser_history(Browser *b)
 {
-	gchar *file; 
-	gchar *command;
-	gchar *returned;
+	char *file; 
+	char *command;
+	char *returned;
 
 	file =	g_build_filename(g_get_home_dir(), DEFAULT_HISTORY_FILE, NULL);
 	command = g_strconcat("sh -c 'sort ", file, " | dmenu -l 15'", NULL);

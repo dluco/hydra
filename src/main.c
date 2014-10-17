@@ -1,17 +1,18 @@
 #include <stdlib.h>
-#include <gtk/gtk.h>
-#include <webkit/webkit.h>
-#include "browser.h"
-#include "utils.h"
+#include <stdio.h>
+#include "hydra.h"
 #include "config.h"
+#include "browser.h"
+#include "tab.h"
+#include "utils.h"
 
 /* main entry-point */
 int main(int argc, char *argv[])
 {
 	gboolean version = FALSE;
 	gboolean fullscreen = FALSE;
-	gchar *geometry = NULL;
-	gchar **uris = NULL;
+	char *geometry = NULL;
+	char **uris = NULL;
 	GError *error = NULL;
 
 	GOptionEntry entries[] = {
@@ -38,9 +39,18 @@ int main(int argc, char *argv[])
 	if (fullscreen) {
 		gtk_window_fullscreen(GTK_WINDOW(b->window));
 	}
-
-	/* load homepage on startup */
-	tab_load_uri(browser_get_current_tab(b), DEFAULT_HOME);
+	
+	if (uris) {
+		/* load first uri in first tab (already created) */
+		tab_load_uri(browser_get_current_tab(b), *uris++);
+		/* load other uris (if any) in new tabs */
+		while (uris && *uris) {
+			tab_load_uri(tab_new(b, "Loading..."), *uris++);
+		}
+	} else {
+		/* load homepage on startup */
+		tab_load_uri(browser_get_current_tab(b), DEFAULT_HOME);
+	}
 
 	gtk_main();
 

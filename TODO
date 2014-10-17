@@ -4,15 +4,13 @@
 - store a Browser's Tabs in an array/list:
 	- get_current_tab: get vbox from notebook and search list for (t->vbox == vbox)
 	- use get_tab_num as base for other functions
+	- USE: "g_list"
 
 - favicon support
 	- use webkit favicon database?
 
 - use webkit_settings_set_user_agent_with_application_details
 
-- new tab notebook button
-	- use GTK_STOCK_ADD
-	- figure out how to get in notebook label-bar
-
 BUGS
 ----
+- "Stop" context menu item doesn't stop loading of page

@@ -198,8 +198,7 @@ Tab *tab_new(Browser *b, char *title)
 	g_signal_connect_swapped(G_OBJECT(search_hide), "clicked", G_CALLBACK(gtk_widget_hide), t->searchbar);
 	
 	/* apply webkit settings */
-	webkit_web_view_set_settings(t->view, b->webkit_settings);
-	webkit_web_view_set_highlight_text_matches(t->view, TRUE);
+	//webkit_web_view_set_settings(t->view, b->webkit_settings);
 	webkit_web_view_set_zoom_level(t->view, DEFAULT_ZOOM_LEVEL);
 	
 	/* scrolled window settings */
@@ -208,6 +207,7 @@ Tab *tab_new(Browser *b, char *title)
 
 	/* add to notebook */
 	int index = gtk_notebook_append_page(GTK_NOTEBOOK(b->notebook), t->vbox, ebox);
+	/* enable DnD */
 	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(b->notebook), t->vbox, TRUE);
 
 	/* setup widgets, automatically focus the addressbar */
@@ -417,8 +417,8 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 	if (browser_get_current_tab_num(b) == browser_get_tab_num(b, t)) {
 		gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
 		gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), webkit_web_view_can_go_forward(t->view));
-		gtk_widget_set_visible(GTK_WIDGET(b->refresh_button), (t->progress == 1.0));
-		gtk_widget_set_visible(GTK_WIDGET(b->stop_button), (t->progress != 1.0));
+		gtk_widget_set_visible(GTK_WIDGET(b->refresh_button), (t->progress == 1.0 || t->progress == 0.0));
+		gtk_widget_set_visible(GTK_WIDGET(b->stop_button), (t->progress < 1.0 && t->progress > 0.0));
 	}
 }
 

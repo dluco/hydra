@@ -39,12 +39,6 @@ int main(int argc, char *argv[])
 		gtk_window_fullscreen(GTK_WINDOW(b->window));
 	}
 
-	/*
-	if (argc == 2) {
-		tab_load_uri(browser_get_current_tab(b), argv[1]);
-	}
-	*/
-
 	/* load homepage on startup */
 	tab_load_uri(browser_get_current_tab(b), DEFAULT_HOME);
 

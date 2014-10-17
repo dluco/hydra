@@ -63,13 +63,16 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 		case GDK_KEY_Page_Down:
 			browser_switch_tab(b, TRUE);
 			return TRUE;
-		case GDK_KEY_t:
+		case GDK_KEY_t:	/* Ctrl+t : New tab */
 			browser_new_tab(b);
 			return TRUE;
-		case GDK_KEY_w:
+		case GDK_KEY_w:	/* Ctrl+w : Close tab */
 			tab_close(t);
 			return TRUE;
-		case GDK_KEY_q:
+		case GDK_KEY_n:	/* Ctrl+t : New browser */
+			browser_new();
+			return TRUE;
+		case GDK_KEY_q:	/* Ctrl+q : Close browser */
 			browser_close(b);
 			return TRUE;
 		case GDK_KEY_bracketright: // FIXME: use Ctrl++
@@ -84,7 +87,7 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 		case GDK_KEY_e: /* Ctrl+e : Reload page (bypass cache) */
 			tab_reload(t, TRUE);
 			return TRUE;
-		case GDK_KEY_u: /* Ctrl+u : View Page Source */
+		case GDK_KEY_u: /* Ctrl+u : View page source */
 			tab_view_source(t);
 			return TRUE;
 		case GDK_KEY_Return:
@@ -131,6 +134,8 @@ static void browser_tab_switched_cb(GtkNotebook *notebook, GtkWidget *page, guin
 	/* update toolbar buttons */
 	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
 	gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), webkit_web_view_can_go_forward(t->view));
+	gtk_widget_set_visible(GTK_WIDGET(b->refresh_button), (t->progress == 1.0 || t->progress == 0.0));
+	gtk_widget_set_visible(GTK_WIDGET(b->stop_button), (t->progress < 1.0 && t->progress > 0.0));
 }
 
 static void browser_new_tab_cb(GtkWidget *widget, Browser *b)

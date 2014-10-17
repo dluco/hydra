@@ -1,7 +1,9 @@
 # hydra - lightweight browser
-# See LICENSE file for copyright and license details.
+# See LICENSE file for copyright and license details
 
-include ../config.mk
+BASEDIR = ..
+
+include ${BASEDIR}/config.mk
 
 SRC = browser.c tab.c utils.c main.c
 OBJ = ${SRC:.c=.o}

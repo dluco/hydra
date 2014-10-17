@@ -9,6 +9,7 @@
 
 - favicon support
 	- use webkit favicon database?
+	- make same size as spinner 
 
 - use webkit_settings_set_user_agent_with_application_details
 

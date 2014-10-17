@@ -49,6 +49,7 @@ struct _Tab {
 	WebKitWebView *view;		/* webview - child of scrolled window */
 	GtkWidget *label;			/* notebook text label */
 	GtkWidget *spinner;			/* progress indicator */
+	GtkWidget* icon;
 	GtkWidget *searchbar; 
 	GtkWidget *search_label; 
 	GtkWidget *search_entry; 

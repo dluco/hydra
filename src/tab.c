@@ -16,6 +16,7 @@ static void tab_search_previous_cb(GtkWidget *widget, Tab *t);
 static void tab_search_next_cb(GtkWidget *widget, Tab *t);
 static void tab_search_highlight_cb(GtkWidget *widget, Tab *t);
 static void tab_search_case_cb(GtkWidget *widget, Tab *t);
+static void tab_icon_loaded_cb(WebKitWebView *view, char *icon_uri, Tab *t);
 static WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab *t);
 static void tab_download_cb(WebKitWebView *web_view, GObject *d, gpointer user_data);
 static void tab_title_changed(WebKitWebView *view, GParamSpec *pspec, Tab *t);
@@ -98,6 +99,8 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_widget_set_events(ebox, GDK_BUTTON_PRESS_MASK);
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(ebox), hbox);
+	/* empty tab icon */
+	t->icon = gtk_image_new();
 	/* tab spinner */
 	t->spinner = gtk_spinner_new();
 	/* tab label */
@@ -125,11 +128,13 @@ Tab *tab_new(Browser *b, char *title)
 	/* connect to style changes to keep button **really** small */
 	//g_signal_connect(G_OBJECT(close_button), "style-set", G_CALLBACK(tab_close_button_style_set_cb), NULL);
 	/* pack and show all */
+	gtk_box_pack_start(GTK_BOX(hbox), t->icon, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), t->spinner, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), t->label, TRUE, TRUE, 4);
 	gtk_box_pack_start(GTK_BOX(hbox), align, FALSE, FALSE, 0);
 	gtk_widget_show_all(ebox);
-	/* hide spinner initially */
+	/* hide icon and spinner initially */
+	gtk_widget_hide(t->icon);
 	gtk_widget_hide(t->spinner);
 
 	/* scrolled webview */
@@ -186,6 +191,7 @@ Tab *tab_new(Browser *b, char *title)
 	g_signal_connect(G_OBJECT(t->view), "notify::title", G_CALLBACK(tab_title_changed), t);
 	g_signal_connect(G_OBJECT(t->view), "notify::load-status", G_CALLBACK(tab_load_status_changed), t);
 	g_signal_connect(G_OBJECT(t->view), "notify::progress", G_CALLBACK(tab_progress_changed_cb), t);
+	g_signal_connect(G_OBJECT(t->view), "icon-loaded", G_CALLBACK(tab_icon_loaded_cb), t);
 	g_signal_connect(G_OBJECT(t->view), "hovering-over-link", G_CALLBACK(browser_link_hover_cb), b);
 	g_signal_connect(G_OBJECT(t->view), "create-web-view", G_CALLBACK(tab_new_requested), t);
 	g_signal_connect(G_OBJECT(t->view), "download-requested", G_CALLBACK(tab_download_cb), t->view);
@@ -311,6 +317,15 @@ void tab_zoom_reset(Tab *t)
 	webkit_web_view_set_zoom_level(t->view, DEFAULT_ZOOM_LEVEL); 
 }
 
+static void tab_icon_loaded_cb(WebKitWebView *view, char *icon_uri, Tab *t)
+{
+	GdkPixbuf *icon;
+
+	if ((icon = webkit_web_view_try_get_favicon_pixbuf(t->view, 16, 16))) {
+		gtk_image_set_from_pixbuf(GTK_IMAGE(t->icon), icon);
+	}
+}
+
 /* when a new tab is requested, return the t->view */
 static WebKitWebView *tab_new_requested(WebKitWebView *v, WebKitWebFrame *f, Tab *t)
 {
@@ -381,6 +396,8 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 	switch(webkit_web_view_get_load_status(t->view)) {
 	case WEBKIT_LOAD_PROVISIONAL:
 		gtk_label_set_text(GTK_LABEL(t->label), "Loading...");
+		/* hide icon */
+		gtk_widget_hide(t->icon);
 		/* start and show spinner */
 		gtk_spinner_start(GTK_SPINNER(t->spinner));
 		gtk_widget_show(t->spinner);
@@ -409,6 +426,8 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 		/* hide and stop spinner */
 		gtk_widget_hide(t->spinner);
 		gtk_spinner_stop(GTK_SPINNER(t->spinner));
+		/* show icon */
+		gtk_widget_show(t->icon);
 		break;
 	default:
 		break;

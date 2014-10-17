@@ -239,6 +239,11 @@ void browser_reload(Browser *b)
 	tab_reload(browser_get_current_tab(b), FALSE);
 }
 
+void browser_stop(Browser *b)
+{
+	tab_stop_loading(browser_get_current_tab(b));
+}
+
 void browser_go_home(Browser *b)
 {
 	tab_home(browser_get_current_tab(b));
@@ -298,6 +303,7 @@ Browser *browser_new(void)
 	b->back_button = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
 	b->forward_button = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
 	b->refresh_button = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
+	b->stop_button = gtk_tool_button_new_from_stock(GTK_STOCK_STOP);
 	b->uri_entry = gtk_entry_new();
 	tool_item = gtk_tool_item_new();
 	gtk_tool_item_set_expand(tool_item, TRUE);	// allow uri-bar to expand
@@ -306,6 +312,7 @@ Browser *browser_new(void)
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->back_button), -1);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->forward_button), -1);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->refresh_button), -1);
+	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->stop_button), -1);
 	gtk_container_add(GTK_CONTAINER(tool_item), b->uri_entry);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(tool_item), -1);
 	gtk_toolbar_insert(GTK_TOOLBAR(b->toolbar), GTK_TOOL_ITEM(b->home_button), -1);
@@ -365,6 +372,7 @@ Browser *browser_new(void)
 	g_signal_connect_swapped(G_OBJECT(b->back_button), "clicked", G_CALLBACK(browser_go_back), b);
 	g_signal_connect_swapped(G_OBJECT(b->forward_button), "clicked", G_CALLBACK(browser_go_forward), b);
 	g_signal_connect_swapped(G_OBJECT(b->refresh_button), "clicked", G_CALLBACK(browser_reload), b);
+	g_signal_connect_swapped(G_OBJECT(b->stop_button), "clicked", G_CALLBACK(browser_stop), b);
 	g_signal_connect(G_OBJECT(b->uri_entry), "activate", G_CALLBACK(browser_uri_entry_activated_cb), b);
 	g_signal_connect_swapped(G_OBJECT(b->home_button), "clicked", G_CALLBACK(browser_go_home), b);
 	g_signal_connect(G_OBJECT(b->notebook), "switch-page", G_CALLBACK(browser_tab_switched_cb), b);

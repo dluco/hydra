@@ -9,7 +9,7 @@ typedef struct _Browser {
 	GtkWidget *vbox;
 	GtkWidget *uri_entry;	
 	GtkWidget *toolbar;
-	GtkToolItem *back_button, *forward_button, *refresh_button, *home_button;
+	GtkToolItem *back_button, *forward_button, *refresh_button, *stop_button, *home_button;
 	GtkWidget *notebook; 
 	GtkWidget *new_tab_button;
 	GtkWidget *statusbar;
@@ -40,6 +40,7 @@ void browser_go_back(Browser *b);
 void browser_go_forward(Browser *b);
 void browser_go_home(Browser *b);
 void browser_reload(Browser *b);
+void browser_stop(Browser *b);
 void browser_show_search_entry(Browser *b);
 void browser_focus_tab_view(Browser *b);
 Browser *browser_new(void);

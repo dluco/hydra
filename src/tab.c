@@ -282,7 +282,11 @@ void tab_reload(Tab *t, gboolean bypass_cache)
 
 void tab_stop_loading(Tab *t)
 {
+	/* stop loading page */
 	webkit_web_view_stop_loading(t->view);
+	/* stop and hide spinner */
+	gtk_spinner_stop(GTK_SPINNER(t->spinner));
+	gtk_widget_hide(t->spinner);
 }
 
 void tab_home(Tab *t)
@@ -388,6 +392,7 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 			gtk_entry_set_text(GTK_ENTRY(b->uri_entry), uri); 
 		}
 		
+		/* FIXME: update history */
 		FILE *history = fopen(g_build_filename(g_get_home_dir(), DEFAULT_HISTORY_FILE, NULL), "a+");
 		
 		if (history) {
@@ -396,6 +401,8 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 		}
 
 		break;
+	case WEBKIT_LOAD_FAILED:
+		gtk_label_set_text(GTK_LABEL(t->label), "Error");
 	case WEBKIT_LOAD_FINISHED:
 		t->progress = 1.0;
 		/* hide and stop spinner */
@@ -406,9 +413,13 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 		break;
 	}
 
-	/* update toolbar buttons */
-	gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
-	gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), webkit_web_view_can_go_forward(t->view));
+	/* update toolbar buttons if current tab */
+	if (browser_get_current_tab_num(b) == browser_get_tab_num(b, t)) {
+		gtk_widget_set_sensitive(GTK_WIDGET(b->back_button), webkit_web_view_can_go_back(t->view));
+		gtk_widget_set_sensitive(GTK_WIDGET(b->forward_button), webkit_web_view_can_go_forward(t->view));
+		gtk_widget_set_visible(GTK_WIDGET(b->refresh_button), (t->progress == 1.0));
+		gtk_widget_set_visible(GTK_WIDGET(b->stop_button), (t->progress != 1.0));
+	}
 }
 
 static void tab_progress_changed_cb(WebKitWebView *view, GParamSpec *pspec, Tab *t)

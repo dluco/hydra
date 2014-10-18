@@ -11,6 +11,7 @@
 #define DOWNLOAD_LOCATION g_get_home_dir()
 
 /* callbacks */
+static void tab_close_button_clicked_cb(GtkWidget *widget, Tab *t);
 static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t);
 static void tab_search_previous_cb(GtkWidget *widget, Tab *t);
 static void tab_search_next_cb(GtkWidget *widget, Tab *t);
@@ -33,6 +34,12 @@ static void tab_close_button_style_set_cb(GtkWidget *button, GtkRcStyle *prev_st
 	gtk_widget_set_size_request(button, w, h);
 }
 */
+
+static void tab_close_button_clicked_cb(GtkWidget *widget, Tab *t)
+{
+	/* use browser_close_tab - tab_close doesn't close after last tab */
+	browser_close_tab(t->parent, t);
+}
 
 /* search-entry callback */
 static void tab_search_entry_activated_cb(GtkWidget *entry, Tab *t)
@@ -187,7 +194,7 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_box_pack_start(GTK_BOX(t->vbox), t->searchbar, FALSE, FALSE, 0);
 
 	/*callbacks*/
-	g_signal_connect_swapped(G_OBJECT(close_button), "clicked", G_CALLBACK(tab_close), t);
+	g_signal_connect(G_OBJECT(close_button), "clicked", G_CALLBACK(tab_close_button_clicked_cb), t);
 	g_signal_connect(G_OBJECT(t->view), "notify::title", G_CALLBACK(tab_title_changed), t);
 	g_signal_connect(G_OBJECT(t->view), "notify::load-status", G_CALLBACK(tab_load_status_changed), t);
 	g_signal_connect(G_OBJECT(t->view), "notify::progress", G_CALLBACK(tab_progress_changed_cb), t);

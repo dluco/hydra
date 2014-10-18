@@ -10,9 +10,13 @@
 - favicon support
 	- use webkit favicon database?
 	- make same size as spinner 
+	- reset when going to new page:
 
 - use webkit_settings_set_user_agent_with_application_details
 
 BUGS
 ----
 - "Stop" context menu item doesn't stop loading of page
+- previous favicon displayed if current page dooesn't have one
+- closing browser causes segfault
+- replace "qdata" stuff with g_list

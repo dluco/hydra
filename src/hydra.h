@@ -20,15 +20,19 @@ typedef struct _Hydra Hydra;
 typedef struct _Browser Browser;
 typedef struct _Tab Tab;
 
+#define BROWSER(obj)	((Browser *)(obj))
+#define TAB(obj)		((Tab *)(obj))
+
 struct _Hydra {
-	GList *browsers;
+	GList *browsers;	/* list of all browser windows */
 	GHashTable *settings;
 };
 
 struct _Browser {	
+	GList *tabs;		/* list of all tabs in this browser window */
 	WebKitWebSettings *webkit_settings;
-	SoupSession *session;
-	SoupCookieJar *jar;
+	SoupSession *soup_session;
+	SoupCookieJar *cookie_jar;
 	GtkWidget *window;
 	GtkWidget *vbox;
 	GtkWidget *uri_entry;	
@@ -37,8 +41,6 @@ struct _Browser {
 	GtkWidget *notebook; 
 	GtkWidget *new_tab_button;
 	GtkWidget *statusbar;
-	GQuark term_data_id;
-	gchar *title;
 	int status_context_id;
 };
 
@@ -47,6 +49,7 @@ struct _Tab {
 	GtkWidget *vbox;			/* vbox */
 	GtkWidget *scroll;			/* scrolled window - child of vbox */
 	WebKitWebView *view;		/* webview - child of scrolled window */
+	GtkWidget *ebox;			/* toplevel widget for tab label */
 	GtkWidget *label;			/* notebook text label */
 	GtkWidget *spinner;			/* progress indicator */
 	GtkWidget* icon;
@@ -61,5 +64,7 @@ struct _Tab {
 	double progress; 				/* progress of page being loaded */
 	guint status_context_id;	/* statusbar id */
 };
+
+extern Hydra *hydra;
 
 #endif /* _HYDRA_H_ */

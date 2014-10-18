@@ -84,7 +84,7 @@ static void tab_search_case_cb(GtkWidget *widget, Tab *t)
 Tab *tab_new(Browser *b, char *title)
 {
 	Tab *t;
-	GtkWidget *hbox, *ebox, *close_button, *align;
+	GtkWidget *hbox, *close_button, *align;
 	GtkToolItem *search_hide;
 	GtkRcStyle *rcstyle;
 	GtkToolItem *tool_item;
@@ -95,10 +95,10 @@ Tab *tab_new(Browser *b, char *title)
 	t->vbox = gtk_vbox_new(FALSE, 0);
 
 	/* tab notebook label */
-	ebox = gtk_event_box_new();
-	gtk_widget_set_events(ebox, GDK_BUTTON_PRESS_MASK);
+	t->ebox = gtk_event_box_new();
+	gtk_widget_set_events(t->ebox, GDK_BUTTON_PRESS_MASK);
 	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(ebox), hbox);
+	gtk_container_add(GTK_CONTAINER(t->ebox), hbox);
 	/* empty tab icon */
 	t->icon = gtk_image_new();
 	/* tab spinner */
@@ -132,7 +132,7 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_box_pack_start(GTK_BOX(hbox), t->spinner, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), t->label, TRUE, TRUE, 4);
 	gtk_box_pack_start(GTK_BOX(hbox), align, FALSE, FALSE, 0);
-	gtk_widget_show_all(ebox);
+	gtk_widget_show_all(t->ebox);
 	/* hide icon and spinner initially */
 	gtk_widget_hide(t->icon);
 	gtk_widget_hide(t->spinner);
@@ -213,29 +213,22 @@ Tab *tab_new(Browser *b, char *title)
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(t->scroll), GTK_SHADOW_NONE);
 
 	/* add to notebook */
-	int index = gtk_notebook_append_page(GTK_NOTEBOOK(b->notebook), t->vbox, ebox);
+	gtk_notebook_append_page(GTK_NOTEBOOK(b->notebook), t->vbox, t->ebox);
 	/* enable DnD */
 	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(b->notebook), t->vbox, TRUE);
 
-	/* setup widgets, automatically focus the addressbar */
-	g_object_set_qdata(G_OBJECT(gtk_notebook_get_nth_page(GTK_NOTEBOOK(b->notebook), index)), b->term_data_id, t);
+	/* add to parent's tabs list */
+	b->tabs = g_list_append(b->tabs, t);
+
+	/* 
 	gtk_statusbar_pop(GTK_STATUSBAR(b->statusbar), b->status_context_id);
 	gtk_statusbar_push(GTK_STATUSBAR(b->statusbar), b->status_context_id, "");
+	*/
 
 	/* hide searchbar initally */
 	gtk_widget_show_all(t->vbox);
 	gtk_widget_hide(t->searchbar);
 	
-	/* TODO: switch to the new tab if it has not been opened in background */
-	/*
-	if (!background) {
-		gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), index); 
-	}
-	*/
-//	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), index); 
-
-//	gtk_widget_grab_focus(b->uri_entry);
-
 	return t;
 }
 
@@ -243,15 +236,12 @@ Tab *tab_new(Browser *b, char *title)
 void tab_close(Tab *t)
 {
 	Browser *b = t->parent;
+	/* remove from notebook and tabs list */
 	gtk_notebook_remove_page(GTK_NOTEBOOK(b->notebook), browser_get_tab_num(b, t));
+	b->tabs = g_list_remove(b->tabs, t);
+	/* free data */
+	g_free(t->title);
 	g_free(t);
-
-	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 1) {
-		browser_focus_tab_view(b);
-	} else if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook)) == 0) { 
-		/* exit if no tabs remaining */
-		gtk_main_quit(); 
-	}
 }
 
 /* check for protocol and load uri */
@@ -319,10 +309,13 @@ void tab_zoom_reset(Tab *t)
 
 static void tab_icon_loaded_cb(WebKitWebView *view, char *icon_uri, Tab *t)
 {
-	GdkPixbuf *icon;
+	GdkPixbuf *favicon;
 
-	if ((icon = webkit_web_view_try_get_favicon_pixbuf(t->view, 16, 16))) {
-		gtk_image_set_from_pixbuf(GTK_IMAGE(t->icon), icon);
+	if ((favicon = webkit_web_view_try_get_favicon_pixbuf(t->view, 16, 16))) {
+		/* set tab icon */
+		gtk_image_set_from_pixbuf(GTK_IMAGE(t->icon), favicon);
+		/* remove reference */
+		g_object_unref(favicon);
 	}
 }
 
@@ -367,8 +360,7 @@ void tab_update_title(Tab *t)
 
 	/* update window title if this is the current tab */
 	if (browser_get_current_tab_num(b) == browser_get_tab_num(b, t)) {
-		b->title = str_copy(&b->title, t->title);
-		gtk_window_set_title(GTK_WINDOW(b->window), (b->title) ? b->title : "");
+		gtk_window_set_title(GTK_WINDOW(b->window), (t->title) ? t->title : "");
 	}
 
 	/* set tab label */
@@ -396,7 +388,8 @@ static void tab_load_status_changed(WebKitWebView *view, GParamSpec *pspec, Tab 
 	switch(webkit_web_view_get_load_status(t->view)) {
 	case WEBKIT_LOAD_PROVISIONAL:
 		gtk_label_set_text(GTK_LABEL(t->label), "Loading...");
-		/* hide icon */
+		/* clear and hide icon */
+		gtk_image_clear(GTK_IMAGE(t->icon));
 		gtk_widget_hide(t->icon);
 		/* start and show spinner */
 		gtk_spinner_start(GTK_SPINNER(t->spinner));

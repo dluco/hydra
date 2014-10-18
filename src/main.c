@@ -6,6 +6,8 @@
 #include "tab.h"
 #include "utils.h"
 
+Hydra *hydra;
+
 /* main entry-point */
 int main(int argc, char *argv[])
 {
@@ -33,8 +35,12 @@ int main(int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	/* create first browser */
+	/* create top level Hydra struct */
+	hydra = g_new0(Hydra, 1);
+
+	/* create first browser and add to browsers list */
 	Browser *b = browser_new();
+	hydra->browsers = g_list_append(hydra->browsers, b);
 
 	if (fullscreen) {
 		gtk_window_fullscreen(GTK_WINDOW(b->window));

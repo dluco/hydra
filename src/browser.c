@@ -37,58 +37,55 @@ static gboolean browser_key_press_event_cb(GtkWidget *widget, GdkEventKey *event
 
 	if ((event->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK ) {
 		switch(g) {
-		case GDK_KEY_f:
+		case GDK_KEY_f:			/* Ctrl+f : open search bar */
 			tab_show_search_entry(t);
 			return TRUE;
-		case GDK_KEY_g:
+		case GDK_KEY_g:			/* Ctrl+g : open page from history in new tab */
 			tab_and_go(b);
 			return TRUE;
-		case GDK_KEY_Back:
+		case GDK_KEY_Left:		/* Ctrl+Left : go back */
 			tab_back(t);
 			return TRUE;
-		case GDK_KEY_Forward:
+		case GDK_KEY_Right:		/* Ctrl+Right : go forward */
 			tab_forward(t);
 			return TRUE;
-		case GDK_KEY_comma:
-			tab_back(t);
-			return TRUE;
-		case GDK_KEY_period:
-			tab_forward(t);
-			return TRUE;
-		case GDK_KEY_o:
+		case GDK_KEY_h:			/* Ctrl+h : search history */
 			browser_history(b);
 			return TRUE;
-		case GDK_KEY_Page_Up:
+		case GDK_KEY_Page_Up:	/* Ctrl+PgDn : switch to next tab */
 			browser_switch_tab(b, FALSE);
 			return TRUE;
-		case GDK_KEY_Page_Down:
+		case GDK_KEY_Page_Down:	/* Ctrl+PgUp : switch to previous tab */
 			browser_switch_tab(b, TRUE);
 			return TRUE;
-		case GDK_KEY_t:	/* Ctrl+t : New tab */
+		case GDK_KEY_t:			/* Ctrl+t : new tab */
 			browser_new_tab(b);
 			return TRUE;
-		case GDK_KEY_w:	/* Ctrl+w : Close tab */
-			tab_close(t);
+		case GDK_KEY_w:			/* Ctrl+w : close tab */
+			browser_close_tab(b, t);
 			return TRUE;
-		case GDK_KEY_n:	/* Ctrl+t : New browser */
+		case GDK_KEY_n:			/* Ctrl+t : new browser */
 			browser_new();
 			return TRUE;
-		case GDK_KEY_q:	/* Ctrl+q : Close browser */
+		case GDK_KEY_q:			/* Ctrl+q : close browser */
 			browser_close(b);
 			return TRUE;
-		case GDK_KEY_bracketright: // FIXME: use Ctrl++
+		case GDK_KEY_plus:		/* Ctrl++ : zoom in */
 			tab_zoom(t, TRUE);
 			return TRUE;
-		case GDK_KEY_bracketleft: // FIXME: use Ctrl+-
+		case GDK_KEY_minus:		/* Ctrl+- : zoom out */
 			tab_zoom(t, FALSE);
 			return TRUE;
-		case GDK_KEY_r: /* Ctrl+r : Reload page */
+		case GDK_KEY_0:			/* Ctrl+0 : reset zoom */
+			tab_zoom_reset(t);
+			return TRUE;
+		case GDK_KEY_r:			/* Ctrl+r : reload page */
 			tab_reload(t, FALSE);
 			return TRUE;
-		case GDK_KEY_e: /* Ctrl+e : Reload page (bypass cache) */
+		case GDK_KEY_e: 		/* Ctrl+e : reload page (bypass cache) */
 			tab_reload(t, TRUE);
 			return TRUE;
-		case GDK_KEY_u: /* Ctrl+u : View page source */
+		case GDK_KEY_u:			/* Ctrl+u : view page source */
 			tab_view_source(t);
 			return TRUE;
 		case GDK_KEY_Return:
@@ -164,7 +161,17 @@ void browser_link_hover_cb(WebKitWebView *page, const char *title, const char *l
 
 Tab *browser_get_tab(Browser *b, int tab_num)
 {
-	return (Tab *)g_object_get_qdata(G_OBJECT(gtk_notebook_get_nth_page(GTK_NOTEBOOK(b->notebook), tab_num)), b->term_data_id);
+	/* get child widget from notebook at tab_num */
+	GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(b->notebook), tab_num);
+	/* search b->tabs for parent tab struct of widget */
+	GList *list;
+	for (list = b->tabs; list != NULL; list = list->next) {
+		if (TAB(list->data)->vbox == widget) {
+			return TAB(list->data);
+		}
+	}
+	/* error */
+	return NULL;
 }
 
 Tab *browser_get_current_tab(Browser *b)
@@ -185,18 +192,48 @@ int browser_get_current_tab_num(Browser *b)
 
 void browser_new_tab(Browser *b)
 {
-	/* create new tab, change focus to tab, and focus uri-bar */
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), browser_get_tab_num(b, tab_new(b, "New Tab")));
+	/* create new tab, change notebook page, and focus uri-bar */
+	Tab *t = tab_new(b, "New Tab");
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(b->notebook), browser_get_tab_num(b, t));
 	gtk_widget_grab_focus(b->uri_entry);
+}
+
+void browser_close_tab(Browser *b, Tab *t)
+{
+	/* close tab */
+	tab_close(t);
+
+	/* exit if no tabs remaining */
+	if (g_list_length(b->tabs) == 0) {
+		browser_close(b);
+	} else {
+		browser_focus_tab_view(b);
+	}
 }
 
 void browser_close(Browser *b)
 {
+	/* close and free all tabs */
 	int i;
-	int n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(b->notebook));
+	int n = g_list_length(b->tabs);
 
 	for (i = 0; i < n; i++) {
-		tab_close(browser_get_current_tab(b));
+		tab_close(g_list_nth_data(b->tabs, 0));
+	}
+
+	/* free tabs list */
+	g_list_free(b->tabs);
+
+	/* remove browser from browser list */
+	hydra->browsers = g_list_remove(hydra->browsers, b);
+
+	/* free elements */
+	gtk_widget_destroy(b->vbox);
+	g_free(b);
+
+	if (g_list_length(hydra->browsers) == 0) {
+		/* no more windows open - kill program */
+		gtk_main_quit();
 	}
 }
 
@@ -297,8 +334,6 @@ Browser *browser_new(void)
 	
 	b = g_new0(Browser, 1);
 	
-	b->term_data_id = g_quark_from_static_string("tab");
-
 	b->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	b->vbox = gtk_vbox_new(FALSE, 0);
 	b->notebook = gtk_notebook_new();
@@ -368,10 +403,11 @@ Browser *browser_new(void)
 
 	b->status_context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(b->statusbar), "link-hover");
 
-	b->session = webkit_get_default_session();
-	b->jar = soup_cookie_jar_text_new(g_build_filename(g_get_home_dir(), DEFAULT_COOKIE_FILE, NULL), FALSE);
-	soup_session_add_feature(b->session, SOUP_SESSION_FEATURE(b->jar));
+	b->soup_session = webkit_get_default_session();
+	b->cookie_jar = soup_cookie_jar_text_new(g_build_filename(g_get_home_dir(), DEFAULT_COOKIE_FILE, NULL), FALSE);
+	soup_session_add_feature(b->soup_session, SOUP_SESSION_FEATURE(b->cookie_jar));
 
+	/* create first tab and add to tabs list */
 	t = tab_new(b, "New Tab");
 
 	/* signals */

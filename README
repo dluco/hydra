@@ -6,20 +6,21 @@ Lightweight webkit browser.
 Keyboard Shortcuts
 ------------------
 
-CTRL + l = grab URL bar
-CTRL + j = foreward
-CTRL + k = back
-CTRL + h = hide auxillary widgets
-CTRL + PageUp = previous tab
-CTRL + PageDown = next tab
+CTRL + j = go forward
+CTRL + k = go back
+CTRL + PageUp = switch to previous tab
+CTRL + PageDown = switch to next tab
 CTRL + t = new tab
-CTRL + w = close tab ( zero tabs closes hydra entirely)
-CTRL + { = zoom out
-CTRL + } = zoom in
-CTRL + r = reload
+CTRL + w = close tab
+CTRL + n = new window
+CTRL + q = close window
+CTRL + + = zoom in
+CTRL + - = zoom out
+CTRL + 0 = reset zoom
+CTRL + r = reload page
 CTRL + enter = search URL bar contents with search engine (google as default)
-CTRL + find = open search bar
-CTRL + o = open history with dmenu
+CTRL + f = open search bar
+CTRL + h = open history with dmenu
 CTRL + g = opens history and launches url in new tab 'tab and go'
 ALT + enter + find bar = reverse searchs
-Escape = return focus to the page, instead of the entry bars
+Escape = return focus to page, hide searchbar if focused

@@ -227,8 +227,10 @@ void browser_close(Browser *b)
 	/* remove browser from browser list */
 	hydra->browsers = g_list_remove(hydra->browsers, b);
 
-	/* free elements */
-	gtk_widget_destroy(b->vbox);
+	/* block signal handler for b->window:destroy */
+	g_signal_handlers_block_by_func(G_OBJECT(b->window), G_CALLBACK(browser_close), b);
+	/* free browser widgets elements */
+	gtk_widget_destroy(b->window);
 	g_free(b);
 
 	if (g_list_length(hydra->browsers) == 0) {

@@ -24,3 +24,15 @@ CTRL + h = open history with dmenu
 CTRL + g = opens history and launches url in new tab 'tab and go'
 ALT + enter + find bar = reverse searchs
 Escape = return focus to page, hide searchbar if focused
+
+Author
+------
+
+David Luco <dluco11 at gmail.com>
+
+Credits
+-------
+
+Surf (http://surf.suckless.org/)
+Midori (http://www.midori-browser.org/)
+sb (https://github.com/mutantturkey/sb)

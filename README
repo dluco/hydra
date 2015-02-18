@@ -1,7 +1,21 @@
 Hydra
 =====
 
-Lightweight webkit browser.
+Hydra is a lightweight tabbed browser built using GTK+-2.0 and the WebKit rendering engine. It aims to be a complete replacement for larger, more resource intensive browsers, such as Firefox and Google Chrome.
+
+Features
+--------
+
+The main features of Hydra include:
+- tabs
+- advanced search & highlighting
+- favicons
+- download support
+
+Dependencies
+------------
+
+Hydra requires WebKitGTK 1.0 and GTK+ 2.0 or above.
 
 Keyboard Shortcuts
 ------------------
@@ -25,10 +39,10 @@ CTRL + g = opens history and launches url in new tab 'tab and go'
 ALT + enter + find bar = reverse searchs
 Escape = return focus to page, hide searchbar if focused
 
-Author
-------
+Copyright
+---------
 
-David Luco <dluco11 at gmail.com>
+Copyright 2014 David Luco <dluco11 at gmail.com>
 
 Credits
 -------
